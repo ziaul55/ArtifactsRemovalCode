@@ -176,6 +176,84 @@ classdef additional_functions
                 imwrite(im, strcat(res_dir,name,'processed.png'), 'png');
             end
         end
+
+        function jpg = compress_image(image, q)
+            %READ_IMAGE
+            % Function to load the image
+            % image - image to compress 
+            % q - quality factor (0-100)
+            % returns jpq - compressed image
+            imwrite(image, 'jpg_conv.jpg', 'jpg', 'Quality', q);
+            jpg = imread('jpg_conv.jpg');
+            delete('jpg_conv.jpg');
+        end
+
+        function [im_org, name] = load_image(file)
+            split_name = strsplit(file.name, '.');
+            type = string(split_name(2));
+            name=string(split_name(1));
+
+            switch type
+                case 'tiff'
+                    im_org = additional_functions.load_tiff(file);
+                case 'png'
+                    im_org = additional_functions.load_png(file);
+                case 'bmp'
+                    im_org = additional_functions.load_bmp(file);
+                case 'jpg'
+                    im_org = additional_functions.load_jpg(file);
+                otherwise
+                    ME=MException('Unknown filetype', '%s files are not supported', type);
+                    throw(ME);
+            end
+        end
+
+        function im_org = load_tiff(im_file)
+            f_name = [im_file.folder '\' im_file.name];
+            im = imread(f_name);
+            im_org = additional_functions.conv_to_uint8(im);
+            disp("tiff");
+        end
+
+        function im_org = load_bmp(im_file)
+            f_name = [im_file.folder '\' im_file.name];
+            im = imread(f_name);
+            im_org = additional_functions.conv_to_uint8(im);
+            disp("bmp");
+        end
+
+        function im_org = load_png(im_file)
+            f_name = [im_file.folder '\' im_file.name];
+            im = imread(f_name);
+            im_org = additional_functions.conv_to_uint8(im);
+            disp("png");
+        end
+
+        function im_org = load_jpg(im_file)
+            f_name = [im_file.folder '\' im_file.name];
+            im = imread(f_name);
+            im_org = additional_functions.conv_to_uint8(im);
+            disp("jpg");
+        end
+
+        function create_folder(path)
+            %CREATE_FOLDERS
+            % Function to create folder if it does not exist.
+            % path - filepath of the folder
+            if isfolder(path) == false
+                try
+                    mkdir(path);
+                catch ME
+                    if (strcmp(ME.identifier,''))
+                        msg = sprintf("Folder creation failed. Path: %s",path);
+                        causeException = MException('MATLAB:myCode:dimensions',msg);
+                        ME = addCause(ME,causeException);
+                    end
+                    rethrow(ME);
+                end
+            end
+        end
+
     end
 end
 

@@ -10,7 +10,12 @@ classdef quality_metrics
         function [im_ssim, im_psnr, im_niqe] = count_metrics(im, im_org, model)
             im_ssim=ssim(im, im_org);
             im_psnr=psnr(im, im_org);
-            im_niqe=niqe(im,model);
+
+            if model 
+                 im_niqe=niqe(im,model);
+            else
+                im_niqe=niqe(im);
+            end
         end
 
         %COUNT_DELTA function to count percentage difference between

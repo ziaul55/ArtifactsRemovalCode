@@ -6,7 +6,7 @@ classdef remove_artifacts
         CutPoint % image cut point
         Sigma % sigma value 
         FilterSize % size of the filter
-        FilterType % type of rhe filter
+        FilterType % type of the filter
         Method % type of removal algorithm
     end
 
