@@ -254,6 +254,10 @@ classdef additional_functions
             end
         end
 
+        function save_image(img, path, type)
+            imwrite(img,path,type);
+        end
+
     end
 end
 

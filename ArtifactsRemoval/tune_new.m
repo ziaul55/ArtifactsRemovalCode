@@ -1,4 +1,6 @@
 loader = file_operations("inputfile.json");
-loader.prepare_folders();
+loader = loader.prepare_tabels();
+loader.tune_parameters()
+
 
 
