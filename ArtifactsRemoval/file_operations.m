@@ -51,7 +51,7 @@ classdef file_operations
             obj.TabPattern = table(t_size_gauss{:}, t_vars_gauss{:}, t_names_gauss{:});
         end
 
-        function tune_parameters(obj)
+        function process_images(obj)
 
             % Dataset
             for i=1:length(obj.Datasets)
@@ -86,8 +86,15 @@ classdef file_operations
                             % Method
                             for m=1:length(obj.Methods)
                                 method = string(obj.Methods(m));
-                                path_raw = sprintf("%s/%s/%s/%s/",res_folder,quality,method,filter_type);
+
+                                path_raw = sprintf("%s/%s/%s/%s/raw/",res_folder,quality,method,filter_type);
                                 additional_functions.create_folder(path_raw);
+
+                                path_means = sprintf("%s/%s/%s/%s/means/",res_folder,quality,method,filter_type);
+                                additional_functions.create_folder(path_means);
+
+                                path_heatmaps = sprintf("%s/%s/%s/%s/heatmaps/",res_folder,quality,method,filter_type);
+                                additional_functions.create_folder(path_heatmaps);
 
                                 % Create folder for images
                                 if dataset.save
@@ -110,10 +117,10 @@ classdef file_operations
                 jpg_psnr, jpg_ssim, jpg_niqe, save_file, method, name, path_images,path_raw, type)
 
 
-             obj.t_tabs=cell(length(params),1);
-                for t=1:length(params)
-                    obj.t_tabs{t}=obj.TabPattern;
-                end
+            obj.t_tabs=cell(length(params),1);
+            for t=1:length(params)
+                obj.t_tabs{t}=obj.TabPattern;
+            end
 
             for k=1:length(params)
                 param=params(k,:);
@@ -148,6 +155,77 @@ classdef file_operations
                 writetable(obj.t_tabs{idx},tab_path,"WriteMode","append");
             end
         end
+
+       
+        function process_results(obj)
+
+            % Dataset
+            for i=1:length(obj.Datasets)
+                dataset = obj.Datasets(i);
+                res_folder = dataset.results_filepath;
+
+                % Qualit
+                for q=1:length(obj.Q)
+                    quality = string(obj.Q(q));
+                    % Filter
+                    for f=1:length(obj.Filters)
+                        filter = obj.Filters(f);
+                        filter_type = string(filter.type);
+
+                        % Method
+                        for m=1:length(obj.Methods)
+                            method = string(obj.Methods(m));
+
+                            path_raw = sprintf("%s/%s/%s/%s/raw/",res_folder,quality,method,filter_type);
+                            path_means = sprintf("%s/%s/%s/%s/means/",res_folder,quality,method,filter_type);
+                            path_heatmaps = sprintf("%s/%s/%s/%s/heatmaps/",res_folder,quality,method,filter_type);
+
+                            count_means(path_raw, path_means, obj);
+                            create_heatmaps(path_means, path_heatmaps, method, filter_type);
+                        end
+                    end
+                end
+            end
+        end
+
+        function count_means(path_raw, path_means, obj)
+
+            raw = dir(sprintf("%s*.csv",path_raw));
+
+            % loop over tables with results - count means
+            for idx=1:length(raw)
+                tab=additional_functions.load_csv(raw(idx));
+                tabstats = grpstats(tab,"filter_size","sigma","mean");
+                tabstats=removevars(tabstats,{'GroupCount' });
+                tab_path = sprintf("%smean.csv",path_means);
+                writetable(tabstats,tab_path,"WriteMode","append");
+            end
+        end
+
+        function create_heatmaps(path_means, path_heatmaps, method, filter_type)
+
+            heatmap_vars=["mean_delta_PSNR",...
+                "mean_delta_SSIM", "mean_delta_niqe"];
+            titles=["Mean of delta PSNR",...
+                "Mean of delta SSIM", "Mean of delta NIQE"];
+
+            tab_path = sprintf("%smean.csv",path_means);
+            tab=additional_functions.load_csv(tab_path);
+
+            for j=1:length(heatmap_vars)
+                column_name=heatmap_vars(j);
+                title=titles(j);
+                h=heatmap(tab,"filter_size","sigma", ColorVariable=column_name, Title=title, XLabel="Filter size", YLabel="\sigma",FontSize=15);
+                heatmap_path = sprintf("%s/%s_%s_heatmap.png",path_heatmaps, method, filter_type);
+                saveas(h,strcat(heatmap_path));
+            end
+        end
+
+        function tune_parameters(obj)
+            obj=prepare_tabels(obj);
+            process_images(obj);
+            process_results(obj);
+        end
+
     end
 end
-

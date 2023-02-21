@@ -208,6 +208,11 @@ classdef additional_functions
             end
         end
 
+        function tab = load_csv(file)
+            f_name = [file.folder '\' file.name];
+            tab = readtable(f_name);
+        end
+
         function im_org = load_tiff(im_file)
             f_name = [im_file.folder '\' im_file.name];
             im = imread(f_name);
