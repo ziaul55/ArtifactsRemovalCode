@@ -38,7 +38,7 @@ classdef file_operations
 
         function obj=prepare_tabels(obj)
 
-            %% make a tables for the results
+            % make a tables for the results
             % gaussian filter
             t_size_gauss = {'Size' [0 14]};
             t_vars_gauss = {'VariableTypes', ["string", "string", "string", "double", ...
@@ -46,7 +46,7 @@ classdef file_operations
 
             t_names_gauss = {'VariableNames', ["name", "type", "method", "sigma", ...
                 "filter_size", "jpg_PSNR", "PSNR", "delta_PSNR","jpg_SSIM","SSIM",...
-                "delta_SSIM", "jpg_niqe", "im_niqe", "delta_niqe"]};
+                "delta_SSIM", "jpg_NIQE", "NIQE", "delta_NIQE"]};
 
             obj.TabPattern = table(t_size_gauss{:}, t_vars_gauss{:}, t_names_gauss{:});
         end
@@ -60,6 +60,11 @@ classdef file_operations
                 path=sprintf("%s*.%s",dataset.filepath, dataset.filetype);
                 im_files = dir(path);
 
+                model=0;
+                if dataset.train
+                    model=quality_metrics.train_niqe(dataset.filepath, dataset.filetype);
+                end
+
                 % Quality
                 for q=1:length(obj.Q)
                     quality = string(obj.Q(q));
@@ -72,7 +77,7 @@ classdef file_operations
                         im_jpg = additional_functions.compress_image(im_org, obj.Q(q));
 
                         % count metrics for jpg
-                        [jpg_ssim, jpg_psnr, jpg_niqe] = quality_metrics.count_metrics(im_jpg, im_org, 0);
+                        [jpg_ssim, jpg_psnr, jpg_niqe] = quality_metrics.count_metrics(im_jpg, im_org, dataset.train, model);
 
 
                         % Filter
@@ -181,13 +186,14 @@ classdef file_operations
                             path_heatmaps = sprintf("%s/%s/%s/%s/heatmaps/",res_folder,quality,method,filter_type);
 
                             count_means(path_raw, path_means, obj);
-                            create_heatmaps(path_means, path_heatmaps, method, filter_type);
+                            create_heatmaps(path_means, path_heatmaps, method, filter_type, obj);
                         end
                     end
                 end
             end
         end
 
+        
         function count_means(path_raw, path_means, obj)
 
             raw = dir(sprintf("%s*.csv",path_raw));
@@ -195,19 +201,20 @@ classdef file_operations
             % loop over tables with results - count means
             for idx=1:length(raw)
                 tab=additional_functions.load_csv(raw(idx));
-                tabstats = grpstats(tab,"filter_size","sigma","mean");
+                tabstats = grpstats(tab,["sigma", "filter_size"], "mean", "DataVars",["PSNR","SSIM", "NIQE", "jpg_PSNR","jpg_SSIM","jpg_NIQE","delta_PSNR","delta_SSIM","delta_NIQE"]);
                 tabstats=removevars(tabstats,{'GroupCount' });
                 tab_path = sprintf("%smean.csv",path_means);
                 writetable(tabstats,tab_path,"WriteMode","append");
             end
         end
 
-        function create_heatmaps(path_means, path_heatmaps, method, filter_type)
+        function create_heatmaps(path_means, path_heatmaps, method, filter_type,obj)
 
             heatmap_vars=["mean_delta_PSNR",...
-                "mean_delta_SSIM", "mean_delta_niqe"];
+                "mean_delta_SSIM", "mean_delta_NIQE", "mean_PSNR", "mean_SSIM", "mean_NIQE",];
             titles=["Mean of delta PSNR",...
-                "Mean of delta SSIM", "Mean of delta NIQE"];
+                "Mean of delta SSIM", "Mean of delta NIQE", "Mean of PSNR", "Mean of SSIM", "Mean of NIQE", ...
+                "Mean of jpg PSNR", "Mean of jpg SSIM", "Mean of jpg NIQE"];
 
             tab_path = sprintf("%smean.csv",path_means);
             tab=additional_functions.load_csv(tab_path);

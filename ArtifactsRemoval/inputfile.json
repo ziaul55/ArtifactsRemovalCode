@@ -1,6 +1,6 @@
 {"datasets":[
-    { "filepath":"../Datasets/test1/", "filetype":"bmp", "results_filepath":"../Results/test1", "cutpoint":[1,1], "save": true },
-    { "filepath":"../Datasets/test2/", "filetype":"png", "results_filepath":"../Results/test2", "cutpoint":[1,1], "save": false }
+    { "filepath":"../Datasets/test1/", "filetype":"bmp", "results_filepath":"../Results/test1", "cutpoint":[1,1], "save": true, "train":false },
+    { "filepath":"../Datasets/test2/", "filetype":"png", "results_filepath":"../Results/test2", "cutpoint":[1,1], "save": false, "train": true }
 ],
  "q":[10,20],
  "filters":[

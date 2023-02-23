@@ -7,12 +7,12 @@ classdef quality_metrics
         % im - processed image or jpg
         % im_org - original TIFF filr
         % model - NIQE model
-        function [im_ssim, im_psnr, im_niqe] = count_metrics(im, im_org, model)
+        function [im_ssim, im_psnr, im_niqe] = count_metrics(im, im_org, train, model)
             im_ssim=ssim(im, im_org);
             im_psnr=psnr(im, im_org);
 
-            if model 
-                 im_niqe=niqe(im,model);
+            if train
+                 im_niqe=niqe(im, model);
             else
                 im_niqe=niqe(im);
             end
@@ -28,9 +28,11 @@ classdef quality_metrics
         
         %TRAIN_NIQE function to create NIQE model 
         % filepath - path to a directory with TIFF images
-        function model = train_niqe(filepath)
+        % extension - file extension
+        function model = train_niqe(filepath, extenstion)
             setDir = fullfile(filepath);
-            imds = imageDatastore(setDir,'FileExtensions',{'.tif'});
+            extension = sprintf('.%s', extenstion);
+            imds = imageDatastore(setDir,'FileExtensions',{extension});
             model = fitniqe(imds);
         end
     end
