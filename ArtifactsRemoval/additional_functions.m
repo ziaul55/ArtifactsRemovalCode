@@ -1,6 +1,7 @@
 classdef additional_functions
     %ADDITIONAL_FUNCTIONS Other functions used during processing images
 
+
     methods (Static)
         function true_edges = delete_false_edges(im, n, m, cut_point)
             %DELETE_FALSE_EDGES function to detect jpg compression grid
@@ -189,6 +190,15 @@ classdef additional_functions
         end
 
         function [im_org, name] = load_image(file)
+
+            % how many files have been processed
+            persistent n;
+            if isempty(n)
+                n=0;
+            end
+            n=n+1;
+            disp(n);
+
             split_name = strsplit(file.name, '.');
             type = string(split_name(2));
             name=string(split_name(1));
@@ -217,28 +227,24 @@ classdef additional_functions
             f_name = [im_file.folder '\' im_file.name];
             im = imread(f_name);
             im_org = additional_functions.conv_to_uint8(im);
-            disp("tiff");
         end
 
         function im_org = load_bmp(im_file)
             f_name = [im_file.folder '\' im_file.name];
             im = imread(f_name);
             im_org = additional_functions.conv_to_uint8(im);
-            disp("bmp");
         end
 
         function im_org = load_png(im_file)
             f_name = [im_file.folder '\' im_file.name];
             im = imread(f_name);
             im_org = additional_functions.conv_to_uint8(im);
-            disp("png");
         end
 
         function im_org = load_jpg(im_file)
             f_name = [im_file.folder '\' im_file.name];
             im = imread(f_name);
             im_org = additional_functions.conv_to_uint8(im);
-            disp("jpg");
         end
 
         function create_folder(path)

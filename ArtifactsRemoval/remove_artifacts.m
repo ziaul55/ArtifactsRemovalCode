@@ -4,19 +4,19 @@ classdef remove_artifacts
     properties
         Image % image to process
         CutPoint % image cut point
-        Sigma % sigma value 
+        Sigma % sigma value
         FilterSize % size of the filter
         FilterType % type of the filter
         Method % type of removal algorithm
     end
 
-    methods 
+    methods
         function obj = remove_artifacts(im, cut_point,sigm, filter_size,...
                 filter_type, method)
             %REMOVE_ARTIFACTS Construct an instance of the remove_artifacts
             %class
             obj.CutPoint=cut_point;
-            obj.Image=im;
+            obj.Image=gpuArray(im);
             obj.Sigma=sigm;
             obj.FilterSize=filter_size;
             obj.FilterType=filter_type;
@@ -84,7 +84,7 @@ classdef remove_artifacts
             im_res = imfilter(im .* map_edges, ...
                 filter_mask, 'symmetric', 'conv') ./ W;
 
-             im_res(isnan(im_res))=im(isnan(im_res));
+            im_res(isnan(im_res))=im(isnan(im_res));
         end
 
         function im_res = run_method_2(obj)
@@ -98,10 +98,10 @@ classdef remove_artifacts
 
             % preallocate memory
             [n, m, d] = size(im);
-            im_res=zeros(n,m,d,"double");
-            all_edges = zeros(n, m, d, 'double'); 
-            all_edges_bin=zeros(n,m,d,'logical'); 
-            
+            im_res=zeros(n,m,d,'double');
+            all_edges = zeros(n, m, d, 'double');
+            all_edges_bin=zeros(n,m,d,'logical');
+
             for i=1:d
                 % extract a layer
                 layer = im(:,:,i);
@@ -110,10 +110,17 @@ classdef remove_artifacts
                 gmag_grayscale = mat2gray(gmag);
                 % detect edges
                 [T, ~]=graythresh(gmag_grayscale); % Computes treshold value (Otsu algorithm)
-                gmag_grayscale(gmag_grayscale < T) = 0; % if pixel value is below treshold replace it with 0
+
+                gmag_grayscale_bin = gmag_grayscale;
+                
+                % Does not work for gpuArrays 
+                %all_edges_bin(:,:,i) = imbinarize(gmag_grayscale_bin, 'global'); %Otsu for three channel edges validat
+
+
+                gmag_grayscale(gmag_grayscale <= T) = 0; % if pixel value is below treshold replace it with 0
                 gmag_grayscale(gmag_grayscale > T) = gmag_grayscale(gmag_grayscale > T) - T;  % (pixel-treshold)
                 all_edges(:,:,i) = gmag_grayscale ./(1-T); %(pixel - treshold)/(1-treshold) or 0/(1-treshold)=0
-                all_edges_bin(:,:,i) = imbinarize(gmag_grayscale, 'global'); %Otsu for three channel edges validation
+              
             end
 
             % make a map of the edges ( edge in three channels => 0, compression grid and other => 1 )
@@ -176,11 +183,17 @@ classdef remove_artifacts
                 gmag_grayscale = mat2gray(gmag);
                 % detect edges
                 [T, ~]=graythresh(gmag_grayscale); % compute treshold value (Otsu algorithm)
-                gmag_grayscale(gmag_grayscale < T) = 0; % if pixel value is below treshold replace it with 0
-                gmag_grayscale(gmag_grayscale > T) = gmag_grayscale(gmag_grayscale > T) - T;  % (piksel-treshold)
-                all_edges(:,:,i) = gmag_grayscale ./(1-T); %(piksel - treshold)/(1-treshold) or 0/(1-treshold)=0
 
-                all_edges_bin(:,:,i) = imbinarize(gmag_grayscale, 'global'); %Otsu for three channel edges validation
+                gmag_grayscale_bin = gmag_grayscale;
+
+                % doesn't work on gpuArray - use graytresh instead
+                % all_edges_bin(:,:,i) = imbinarize(gmag_grayscale_bin, 'global'); %Otsu for three channel edges validation
+
+
+
+                gmag_grayscale(gmag_grayscale <= T) = 0; % if pixel value is below treshold replace it with 0
+                gmag_grayscale(gmag_grayscale > T) = gmag_grayscale(gmag_grayscale > T) - T;  % (piksel-treshold)
+                all_edges(:,:,i) = gmag_grayscale ./(1-T); %(piksel - treshold)/(1-treshold) or 0/(1-treshold)=0    
             end
 
             % Prepare binary map of edges
@@ -191,7 +204,7 @@ classdef remove_artifacts
 
             % Create a filter mask
             filter_mask=make_filter(filt);
-          
+
             % Prepare weights matrix
             W2 = imfilter(map_edges_binary, filter_mask, 'symmetric', 'conv');
 
@@ -217,6 +230,8 @@ classdef remove_artifacts
                 im_res(:,:,i)=im_res(:,:,i).*map_edges+(1.- map_edges).*im_res_bin(:,:,i);
             end
         end
+
+
     end
 end
 

@@ -1,173 +1,245 @@
-%% script to tune algorithms parameters
-
-% set a path to the images
-im_path = '..\BreCaHAD\images\*.tif';
-im_files = dir(im_path);
-
-% set a path for result images
-image_folder = '..\ResultsGaussFunctionChanged\Images\Q';
-
-%set a path for result .csv files
-folder_csv ='..\ResultsGaussFunctionChanged\Tables\Raw\Q';
-
-
-%train NIQE metric
-model=quality_metrics.train_niqe(im_path);
-
-%% make a tables for the results
-% gaussian filter
-t_size_gauss = {'Size' [0 14]};
-t_vars_gauss = {'VariableTypes', ["string", "string", "string", "double", ...
-    "double", "double", "double", "double","double","double","double", "double","double", "double"]};
-
-t_names_gauss = {'VariableNames', ["name", "type", "method", "sigma", ...
-    "filter_size", "jpg_PSNR", "PSNR", "delta_PSNR","jpg_SSIM","SSIM",...
-    "delta_SSIM", "jpg_niqe", "im_niqe", "delta_niqe"]};
-
-t_res_gauss = table(t_size_gauss{:}, t_vars_gauss{:}, t_names_gauss{:});
-
-% average filter
-t_size_avg = {'Size' [0 13]};
-t_vars_avg = {'VariableTypes', ["string", "string", "string", ...
-    "double","double","double","double","double","double","double","double", "double", "double"]};
-
-t_names_avg = {'VariableNames', ["name", "type", "method", ...
-    "filter_size", "jpg_PSNR", "PSNR", "delta_PSNR","jpg_SSIM","SSIM",...
-    "delta_SSIM", "jpg_niqe", "im_niqe", "delta_niqe"]};
-
-t_res_avg = table(t_size_avg{:}, t_vars_avg{:}, t_names_avg{:});
-
-%% make parameter sets
-quality=[10 30 50 70 90];
-sigmas =[0.4 0.7 1.1 1.4 1.7 2 2.3 2.6 2.9];
-filter_sizes =[3 5 7 9 11 13 15 17 19];
-methods =["method_1" "method_2" "method_3" "blurr"];
-cut_point=[1 1];
-use_gauss=true;
-use_avg=true;
-use_sigma_avg=false;
-
-params=additional_functions.create_params(sigmas, filter_sizes);
-
-for q=1:length(quality)
-    % Check if folders exist if not, create them
-    image_folder_gauss=strcat(image_folder, string(quality(q)),'\Gauss\');
-    image_folder_avg=strcat(image_folder, string(quality(q)),'\Avg\');
-    folder_csv_q=strcat(folder_csv, string(quality(q)),'\');
-
-    for m=1:length(methods)
-        folder_g=strcat(image_folder_gauss,'/',methods(m),'/');
-        folder_a=strcat(image_folder_avg,'/',methods(m),'/');
-        if isfolder(folder_g) == false && use_gauss==true
-            mkdir(folder_g);
-        end
-        if isfolder(folder_a) == false && use_avg==true
-            mkdir(folder_a);
-        end
+classdef tune_parameters
+    %FILE_OPERATIONS Summary of this class goes here
+    %   Detailed explanation goes here
+    properties
+        Datasets
+        Filters
+        Methods
+        Q
+        TabPattern
     end
 
-    for i=1:length(methods)
+    methods
+        function obj = tune_parameters(json_path)
+            %READ_JSON Read data from json file
+            %   json_path - filepath to json file
+            %   returns datasets - struct with data
+            f_handler=fopen(json_path);
+            formatSpec='%s';
+            raw=fscanf(f_handler,formatSpec);
+            fclose(f_handler);
+            data=jsondecode(raw);
 
-        t_tabs_gauss=cell(length(params),1);
-        for t=1:length(params)
-            t_tabs_gauss{t}=t_res_gauss;
+            try
+                obj.Datasets = data.datasets;
+                obj.Filters = data.filters;
+                obj.Methods = data.methods;
+                obj.Q = data.q;
+            catch ME
+                if (strcmp(ME.identifier,''))
+                    msg = 'File with parameters was invalid. Please check the file and try again.';
+                    causeException = MException('MATLAB:myCode:dimensions',msg);
+                    ME = addCause(ME,causeException);
+                end
+                rethrow(ME);
+            end
         end
 
-        t_tabs_avg=cell(length(filter_sizes),1);
-        for t=1:length(params)
-            t_tabs_avg{t}=t_res_avg;
+        function obj=prepare_tabels(obj)
+
+            % make a tables for the results
+            % gaussian filter
+            t_size_gauss = {'Size' [0 14]};
+            t_vars_gauss = {'VariableTypes', ["string", "string", "string", "double", ...
+                "double", "double", "double", "double","double","double","double", "double","double", "double"]};
+
+            t_names_gauss = {'VariableNames', ["name", "type", "method", "sigma", ...
+                "filter_size", "jpg_PSNR", "PSNR", "delta_PSNR","jpg_SSIM","SSIM",...
+                "delta_SSIM", "jpg_NIQE", "NIQE", "delta_NIQE"]};
+
+            obj.TabPattern = table(t_size_gauss{:}, t_vars_gauss{:}, t_names_gauss{:});
         end
 
-        %% main loop over the images
-        method=methods(i);
+        function process_images(obj)
 
-        folder_csv_q_m_avg=strcat(folder_csv_q,method,'\Avg\');
-        folder_csv_q_m_gauss=strcat(folder_csv_q,method,'\Gauss\');
-        if isfolder(folder_csv_q_m_avg) == false && use_avg==true
-            mkdir(folder_csv_q_m_avg);
-        end
-        if isfolder(folder_csv_q_m_gauss) == false && use_gauss==true
-            mkdir(folder_csv_q_m_gauss);
-        end
+            % Dataset
+            for i=1:length(obj.Datasets)
+                dataset = obj.Datasets(i);
+                res_folder = dataset.results_filepath;
+                path=sprintf("%s*.%s",dataset.filepath, dataset.filetype);
+                im_files = dir(path);
 
-        for ind=1:length(im_files)
-            %% read an image and convert it into uint8
-            im_name = strsplit(im_files(ind).name, '.');
-            name=string(im_name(1));
-            f_name = [im_files(ind).folder '\' im_files(ind).name];
-            im = imread(f_name);
-            im_org = additional_functions.conv_to_uint8(im);
+                model=0;
+                if dataset.train
+                    model=quality_metrics.train_niqe(dataset.filepath, dataset.filetype);
+                end
 
-            %% compress to jpg with quality q
-            imwrite(im_org, 'jpg_conv.jpg', 'jpg', 'Quality', quality(q));
-            im_jpg = imread('jpg_conv.jpg');
-            delete('jpg_conv.jpg');
+                % Quality
+                for q=1:length(obj.Q)
+                    quality = string(obj.Q(q));
 
-            %% count quality metrics for the jpg image
-            [jpg_ssim, jpg_psnr, jpg_niqe] = quality_metrics.count_metrics(im_jpg, im_org,model);
+                    % Image
+                    for idx=1:length(im_files)
+                        [im_org, name] = additional_functions.load_image(im_files(idx));
 
-            if use_gauss==true
-                % run filters
-                parfor k=1:length(params)
-                    param=params(k,:);
-                    sigma=cell2mat(param(1,1));
-                    filter_size=cell2mat(param(1,2));
-                    % run algorithm
-                    rem = remove_artifacts(im_jpg, cut_point, sigma,...
-                        filter_size, 'gauss', method);
-                    im=run_artifacts_removal(rem);
+                        % compress image
+                        im_jpg = additional_functions.compress_image(im_org, obj.Q(q));
 
-                    % count metrics
-                    [im_ssim, im_psnr, im_niqe] = quality_metrics.count_metrics(im, im_org,model);
-                    delta_psnr = quality_metrics.count_delta(im_psnr, jpg_psnr);
-                    delta_ssim = quality_metrics.count_delta(im_ssim, jpg_ssim);
-                    delta_niqe=quality_metrics.count_delta(im_niqe, jpg_niqe);
-                    % save row to the table
-                    t_tabs_gauss{k}(end+1,:) = {name, 'gauss',method, ...
-                        sigma, filter_size, jpg_psnr, im_psnr, delta_psnr, jpg_ssim,...
-                        im_ssim, delta_ssim, jpg_niqe, im_niqe, delta_niqe};
+                        % count metrics for jpg
+                        [jpg_ssim, jpg_psnr, jpg_niqe] = quality_metrics.count_metrics(im_jpg, im_org, dataset.train, model);
 
-                    % save image to a file
-                    % [gauss_method_s{sigma}_f{filter_size}_name.jpg]
-                    img_rem_name_gauss = string(strcat(image_folder_gauss,'\',method,'\', ...
-                        's_',string(sigma),'_f_',string(filter_size),name,'.png')) ;
-                    imwrite(im,img_rem_name_gauss,"png");
+
+                        % Filter
+                        for f=1:length(obj.Filters)
+                            filter = obj.Filters(f);
+                            filter_type = string(filter.type);
+
+                            % Create cell with parameters
+                            params = additional_functions.create_params(filter.sigmas, filter.sizes);
+
+                            % Method
+                            for m=1:length(obj.Methods)
+                                method = string(obj.Methods(m));
+
+                                path_raw = sprintf("%s/%s/%s/%s/raw/",res_folder,quality,method,filter_type);
+                                additional_functions.create_folder(path_raw);
+
+                                path_means = sprintf("%s/%s/%s/%s/means/",res_folder,quality,method,filter_type);
+                                additional_functions.create_folder(path_means);
+
+                                path_heatmaps = sprintf("%s/%s/%s/%s/heatmaps/",res_folder,quality,method,filter_type);
+                                additional_functions.create_folder(path_heatmaps);
+
+                                % Create folder for images
+
+
+                                path_images="";
+
+                                if dataset.save
+                                    path_images = sprintf("%s/%s/%s/%s/images/",res_folder,...
+                                        quality,method,filter_type);
+                                    additional_functions.create_folder(path_images);
+                                end
+
+                                obj = compute_parallel_params(obj,filter_type, params, im_org, im_jpg,...
+                                    jpg_psnr, jpg_ssim, jpg_niqe, dataset.save, method, name, path_images, path_raw,dataset.filetype);
+
+                            end
+                        end
+                    end
                 end
             end
+        end
+
+        function obj = compute_parallel_params(obj,filter_type, params, im_org, im_jpg,...
+                jpg_psnr, jpg_ssim, jpg_niqe, save_file, method, name, path_images,path_raw, type)
+
+
+            t_tabs=cell(length(params),1);
+            for t=1:length(params)
+                t_tabs{t}=obj.TabPattern;
+            end
+
+            parfor k=1:length(params)
+                param=params(k,:);
+                sigma=cell2mat(param(1,1));
+                filter_size=cell2mat(param(1,2));
+                % run algorithm
+                rem = remove_artifacts(im_jpg, [1, 1], sigma,...
+                    filter_size, filter_type, method);
+                im=run_artifacts_removal(rem);
+
+                % count metrics
+                [im_ssim, im_psnr, im_niqe] = quality_metrics.count_metrics(im, im_org,0);
+                delta_psnr = quality_metrics.count_delta(im_psnr, jpg_psnr);
+                delta_ssim = quality_metrics.count_delta(im_ssim, jpg_ssim);
+                delta_niqe=quality_metrics.count_delta(im_niqe, jpg_niqe);
+
+                % save row to the table
+                t_tabs{k}(end+1,:) = {name, filter_type,method, ...
+                    sigma, filter_size, jpg_psnr, im_psnr, delta_psnr, jpg_ssim,...
+                    im_ssim, delta_ssim, jpg_niqe, im_niqe, delta_niqe};
+
+                % save image to a file if save is true
+                if save_file
+                    filepath = sprintf("%ssigm%0.1f_fsize%1.0f_%s.%s",path_images, sigma,filter_size, name, type);
+                    additional_functions.save_image(im, filepath, type)
+                end
+            end
+
             for idx=1:length(params)
                 param=params(idx,:);
-                writetable(t_tabs_gauss{idx}, strcat(folder_csv_q_m_gauss,'sigma_',string(param(1,1)),'f_size',string(param(1,2)),'_gauss.csv'));
+                tab_path = sprintf("%ssigma_%.1ff_size%1.0f_%s.csv",path_raw, string(param(1,1)),string(param(1,2)), filter_type);
+                writetable(t_tabs{idx},tab_path,"WriteMode","append");
             end
+        end
 
+       
+        function process_results(obj)
 
-            if use_avg==true
-                parfor k=1:length(filter_sizes)
-                    %Average filter
-                    % run the algorithm
-                    rem_avg = remove_artifacts(im_jpg, cut_point, use_sigma_avg,...
-                        filter_sizes(k), 'avg', method);
-                    im_avg=run_artifacts_removal(rem_avg);
+            % Dataset
+            for i=1:length(obj.Datasets)
+                dataset = obj.Datasets(i);
+                res_folder = dataset.results_filepath;
 
-                    % count metrics
-                    [im_ssim_avg, im_psnr_avg, im_niqe] = quality_metrics.count_metrics(im_avg, im_org,model);
-                    delta_psnr_avg = quality_metrics.count_delta(im_psnr_avg, jpg_psnr);
-                    delta_ssim_avg = quality_metrics.count_delta(im_ssim_avg, jpg_ssim);
-                    delta_niqe=quality_metrics.count_delta(im_niqe, jpg_niqe);
-                    % save results to the table
-                    t_tabs_avg{k}(end+1,:) = {name, 'avg',method, ...
-                        filter_sizes(k), jpg_psnr, im_psnr_avg, delta_psnr_avg, jpg_ssim,...
-                        im_ssim_avg, delta_ssim_avg,jpg_niqe, im_niqe, delta_niqe};
+                % Qualit
+                for q=1:length(obj.Q)
+                    quality = string(obj.Q(q));
+                    % Filter
+                    for f=1:length(obj.Filters)
+                        filter = obj.Filters(f);
+                        filter_type = string(filter.type);
 
-                    % save image to a file
-                    % [avg_method_f{filter_size}_name.jpg]
-                    img_rem_name_avg = string(strcat(image_folder_avg,'\',method,'\','f_',...
-                        string(filter_sizes(k)),'_',name,'.png')) ;
-                    imwrite(im_avg,img_rem_name_avg);
-                end
-                for idx=1:length(filter_sizes)
-                    writetable(t_tabs_avg{idx}, string(strcat(folder_csv_q_m_avg,string(filter_sizes(idx)),'_avg.csv')));
+                        % Method
+                        for m=1:length(obj.Methods)
+                            method = string(obj.Methods(m));
+
+                            path_raw = sprintf("%s/%s/%s/%s/raw/",res_folder,quality,method,filter_type);
+                            path_means = sprintf("%s/%s/%s/%s/means/",res_folder,quality,method,filter_type);
+                            path_heatmaps = sprintf("%s/%s/%s/%s/heatmaps/",res_folder,quality,method,filter_type);
+
+                            count_means(path_raw, path_means, obj);
+                            create_heatmaps(path_means, path_heatmaps, method, filter_type, obj);
+                        end
+                    end
                 end
             end
         end
+
+        
+        function count_means(path_raw, path_means, obj)
+
+            raw = dir(sprintf("%s*.csv",path_raw));
+
+            % loop over tables with results - count means
+            for idx=1:length(raw)
+                tab=additional_functions.load_csv(raw(idx));
+                tabstats = grpstats(tab,["sigma", "filter_size"], "mean", "DataVars",["PSNR","SSIM", "NIQE", "jpg_PSNR","jpg_SSIM","jpg_NIQE","delta_PSNR","delta_SSIM","delta_NIQE"]);
+                tabstats=removevars(tabstats,{'GroupCount' });
+                tab_path = sprintf("%smean.csv",path_means);
+                writetable(tabstats,tab_path,"WriteMode","append");
+            end
+        end
+
+        function create_heatmaps(path_means, path_heatmaps, method, filter_type,obj)
+
+            heatmap_vars=["mean_delta_PSNR",...
+                "mean_delta_SSIM", "mean_delta_NIQE", "mean_PSNR", "mean_SSIM", "mean_NIQE"];
+            titles=["Mean of delta PSNR",...
+                "Mean of delta SSIM", "Mean of delta NIQE", "Mean of PSNR", "Mean of SSIM", "Mean of NIQE"];
+
+            tab_path = sprintf("%smean.csv",path_means);
+            tab=readtable(tab_path);
+
+            for j=1:length(heatmap_vars)
+                column_name=heatmap_vars(j);
+                title=titles(j);
+                h=heatmap(tab,"filter_size","sigma", ColorVariable=column_name, Title=title, XLabel="Filter size", YLabel="\sigma",FontSize=15);
+                heatmap_path = sprintf("%s/%s_%s_%s_heatmap.png",path_heatmaps, method, filter_type,title);
+                saveas(h,strcat(heatmap_path));
+            end
+        end
+
+        function start_image_processing(obj)
+            obj=prepare_tabels(obj);
+            process_images(obj);
+            process_results(obj);
+        end
+
+        function parallel_image_processing(img, filter_type, filter_size, sigma)
+
+            
+        end
+
     end
 end

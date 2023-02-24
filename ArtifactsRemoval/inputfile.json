@@ -1,11 +1,15 @@
 {"datasets":[
-    { "filepath":"../Datasets/test1/", "filetype":"bmp", "results_filepath":"../Results/test1", "cutpoint":[1,1], "save": true, "train":false },
-    { "filepath":"../Datasets/test2/", "filetype":"png", "results_filepath":"../Results/test2", "cutpoint":[1,1], "save": false, "train": true }
+    { "filepath":"../Datasets/Kodak24/", "filetype":"png", "results_filepath":"../Results/Kodak24", "cutpoint":[1,1], "save": false, "train":false },
+    { "filepath":"../Datasets/LIVE1/", "filetype":"bmp", "results_filepath":"../Results/LIVE1", "cutpoint":[1,1], "save": false, "train": false },
+    { "filepath":"../Datasets/Set5/", "filetype":"png", "results_filepath":"../Results/Set5", "cutpoint":[1,1], "save": false, "train":false },
+    { "filepath":"../Datasets/Set14/", "filetype":"png", "results_filepath":"../Results/Set14", "cutpoint":[1,1], "save": false, "train": false},
+    { "filepath":"../Datasets/classic5/", "filetype":"bmp", "results_filepath":"../Results/classic5", "cutpoint":[1,1], "save": false, "train": false}
+
 ],
- "q":[10,20],
+ "q":[10,20,30,40,50,60,70,90],
  "filters":[
-     {"type":"gauss", "sizes":[3, 5], "sigmas":[0.4, 0.7]},
-     {"type":"avg", "sizes":[3,5], "sigmas":[-1]}],
- "methods":["method_1", "method_2"]
+     {"type":"gauss", "sizes":[3, 5, 7], "sigmas":[0.4, 0.7, 1.1, 1.4, 1.7, 2.0, 2.3, 2.6, 2.9, 3.2, 3.5, 3.8, 4.1,4.4,4.7,5.0]},
+     {"type":"avg", "sizes":[3, 5, 7], "sigmas":[-1]}],
+ "methods":["method_1", "method_2", "method_3", "blurr"]
 }
 
