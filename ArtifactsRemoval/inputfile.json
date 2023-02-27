@@ -1,9 +1,9 @@
 {"datasets":[
-    { "filepath":"../Datasets/Kodak24/", "filetype":"png", "results_filepath":"../Results/Kodak24", "cutpoint":[1,1], "save": false, "train":false },
-    { "filepath":"../Datasets/LIVE1/", "filetype":"bmp", "results_filepath":"../Results/LIVE1", "cutpoint":[1,1], "save": false, "train": false },
-    { "filepath":"../Datasets/Set5/", "filetype":"png", "results_filepath":"../Results/Set5", "cutpoint":[1,1], "save": false, "train":false },
-    { "filepath":"../Datasets/Set14/", "filetype":"png", "results_filepath":"../Results/Set14", "cutpoint":[1,1], "save": false, "train": false},
-    { "filepath":"../Datasets/classic5/", "filetype":"bmp", "results_filepath":"../Results/classic5", "cutpoint":[1,1], "save": false, "train": false}
+    { "filepath":"../Datasets/Kodak24/", "filetype":"png", "results_filepath":"../Results2/Kodak24", "cutpoint":[1,1], "save": false, "train":false },
+    { "filepath":"../Datasets/LIVE1/", "filetype":"bmp", "results_filepath":"../Results2/LIVE1", "cutpoint":[1,1], "save": false, "train": false },
+    { "filepath":"../Datasets/Set5/", "filetype":"png", "results_filepath":"../Results2/Set5", "cutpoint":[1,1], "save": false, "train":false },
+    { "filepath":"../Datasets/Set14/", "filetype":"png", "results_filepath":"../Results2/Set14", "cutpoint":[1,1], "save": false, "train": false},
+    { "filepath":"../Datasets/classic5/", "filetype":"bmp", "results_filepath":"../Results2/classic5", "cutpoint":[1,1], "save": false, "train": false}
 
 ],
  "q":[10,20,30,40,50,60,70,90],

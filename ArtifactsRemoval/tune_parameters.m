@@ -56,6 +56,10 @@ classdef tune_parameters
             for i=1:length(obj.Datasets)
                 dataset = obj.Datasets(i);
                 res_folder = dataset.results_filepath;
+
+                path_benchmarks = sprintf("%s/benchmarks/",res_folder);
+                additional_functions.create_folder(path_benchmarks);
+
                 path=sprintf("%s*.%s",dataset.filepath, dataset.filetype);
                 im_files = dir(path);
 
@@ -172,9 +176,11 @@ classdef tune_parameters
                 dataset = obj.Datasets(i);
                 res_folder = dataset.results_filepath;
 
-                % Qualit
+
+                % Quality
                 for q=1:length(obj.Q)
                     quality = string(obj.Q(q));
+
                     % Filter
                     for f=1:length(obj.Filters)
                         filter = obj.Filters(f);
@@ -190,6 +196,7 @@ classdef tune_parameters
 
                             count_means(path_raw, path_means, obj);
                             create_heatmaps(path_means, path_heatmaps, method, filter_type, obj);
+                            make_benchmark(path_means,res_folder, quality, method, filter_type, obj);
                         end
                     end
                 end
@@ -230,15 +237,26 @@ classdef tune_parameters
             end
         end
 
+        function make_benchmark(path_means, res_folder, quality, method, filter_type, obj)
+            tab_path = sprintf("%smean.csv",path_means);
+            path_benchmarks = sprintf("%s/benchmarks/",res_folder);
+            tab=readtable(tab_path);
+
+            vars=["mean_delta_PSNR",...
+                "mean_delta_SSIM", "mean_delta_NIQE", "mean_PSNR", "mean_SSIM", "mean_NIQE"];
+            
+            for i=1:length(vars)
+                benchmark_path = sprintf("%s%s%sbenchmark.csv", path_benchmarks,quality, vars(i));
+                tab_row = sortrows(tab, vars(i), "ascend");
+                tab_row = tab_row(1,:);
+                writetable(tab_row, benchmark_path,"WriteMode","append");
+            end
+        end
+
         function start_image_processing(obj)
             obj=prepare_tabels(obj);
             process_images(obj);
             process_results(obj);
-        end
-
-        function parallel_image_processing(img, filter_type, filter_size, sigma)
-
-            
         end
 
     end

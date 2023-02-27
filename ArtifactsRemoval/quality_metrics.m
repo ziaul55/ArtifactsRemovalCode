@@ -5,7 +5,7 @@ classdef quality_metrics
     methods (Static)
         %COUNT_METRICS function to count image quality metrics
         % im - processed image or jpg
-        % im_org - original TIFF filr
+        % im_org - original TIFF file
         % model - NIQE model
         function [im_ssim, im_psnr, im_niqe] = count_metrics(im, im_org, train, model)
             im_ssim=ssim(im, im_org);

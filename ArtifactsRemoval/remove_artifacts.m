@@ -40,6 +40,7 @@ classdef remove_artifacts
 
             % cast to uint8
             im_res = im2uint8(im_res);
+            im_res=gather(im_res);
         end
 
         function im_res = run_method_1(obj)
@@ -64,7 +65,13 @@ classdef remove_artifacts
                 gmag_grayscale = mat2gray(gmag);
 
                 % detect edges
-                all_edges(:,:,i) = imbinarize(gmag_grayscale, 'global'); %Otsu
+                [T, ~]=graythresh(gmag_grayscale); % Computes treshold value (Otsu algorithm)
+                % doesn't work on gpuArray - use graytresh instead
+                % all_edges_bin(:,:,i) = imbinarize(gmag_grayscale_bin, 'global'); %Otsu for three channel edges validation
+                gmag_grayscale_bin = gmag_grayscale;
+                gmag_grayscale_bin(gmag_grayscale_bin <= T) = 0; 
+                gmag_grayscale_bin(gmag_grayscale_bin > T) = 1;  
+                all_edges(:,:,i)=gmag_grayscale_bin;
 
             end
 
@@ -111,10 +118,12 @@ classdef remove_artifacts
                 % detect edges
                 [T, ~]=graythresh(gmag_grayscale); % Computes treshold value (Otsu algorithm)
 
+                % doesn't work on gpuArray - use graytresh instead
+                % all_edges_bin(:,:,i) = imbinarize(gmag_grayscale_bin, 'global'); %Otsu for three channel edges validation
                 gmag_grayscale_bin = gmag_grayscale;
-                
-                % Does not work for gpuArrays 
-                %all_edges_bin(:,:,i) = imbinarize(gmag_grayscale_bin, 'global'); %Otsu for three channel edges validat
+                gmag_grayscale_bin(gmag_grayscale_bin <= T) = 0; 
+                gmag_grayscale_bin(gmag_grayscale_bin > T) = 1;  
+                all_edges_bin(:,:,i)=gmag_grayscale_bin;
 
 
                 gmag_grayscale(gmag_grayscale <= T) = 0; % if pixel value is below treshold replace it with 0
@@ -184,12 +193,12 @@ classdef remove_artifacts
                 % detect edges
                 [T, ~]=graythresh(gmag_grayscale); % compute treshold value (Otsu algorithm)
 
-                gmag_grayscale_bin = gmag_grayscale;
-
                 % doesn't work on gpuArray - use graytresh instead
                 % all_edges_bin(:,:,i) = imbinarize(gmag_grayscale_bin, 'global'); %Otsu for three channel edges validation
-
-
+                gmag_grayscale_bin = gmag_grayscale;
+                gmag_grayscale_bin(gmag_grayscale_bin <= T) = 0; 
+                gmag_grayscale_bin(gmag_grayscale_bin > T) = 1;  
+                all_edges_bin(:,:,i)=gmag_grayscale_bin;
 
                 gmag_grayscale(gmag_grayscale <= T) = 0; % if pixel value is below treshold replace it with 0
                 gmag_grayscale(gmag_grayscale > T) = gmag_grayscale(gmag_grayscale > T) - T;  % (piksel-treshold)
