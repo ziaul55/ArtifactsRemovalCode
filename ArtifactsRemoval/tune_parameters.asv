@@ -39,11 +39,11 @@ classdef tune_parameters
 
             % make a tables for the results
             % gaussian filter
-            t_size_gauss = {'Size' [0 15]};
-            t_vars_gauss = {'VariableTypes', ["string","string", "string", "string", "double", ...
+            t_size_gauss = {'Size' [0 14]};
+            t_vars_gauss = {'VariableTypes', ["string", "string", "string", "double", ...
                 "double", "double", "double", "double","double","double","double", "double","double", "double"]};
 
-            t_names_gauss = {'VariableNames', ["quality","name", "type", "method", "sigma", ...
+            t_names_gauss = {'VariableNames', ["name", "type", "method", "sigma", ...
                 "filter_size", "jpg_PSNR", "PSNR", "delta_PSNR","jpg_SSIM","SSIM",...
                 "delta_SSIM", "jpg_NIQE", "NIQE", "delta_NIQE"]};
 
@@ -116,7 +116,7 @@ classdef tune_parameters
                                 end
 
                                 obj = compute_parallel_params(obj,filter_type, params, im_org, im_jpg,...
-                                    jpg_psnr, jpg_ssim, jpg_niqe, dataset.save, method, name, path_images, path_raw,dataset.filetype, quality);
+                                    jpg_psnr, jpg_ssim, jpg_niqe, dataset.save, method, name, path_images, path_raw,dataset.filetype);
 
                             end
                         end
@@ -126,7 +126,7 @@ classdef tune_parameters
         end
 
         function obj = compute_parallel_params(obj,filter_type, params, im_org, im_jpg,...
-                jpg_psnr, jpg_ssim, jpg_niqe, save_file, method, name, path_images,path_raw, type, quality)
+                jpg_psnr, jpg_ssim, jpg_niqe, save_file, method, name, path_images,path_raw, type)
 
 
             t_tabs=cell(length(params),1);
@@ -196,11 +196,11 @@ classdef tune_parameters
 
                             count_means(path_raw, path_means, obj);
                             create_heatmaps(path_means, path_heatmaps, method, filter_type, obj);
-                           % make_benchmark(path_means, res_folder, quality, obj);
+                            make_benchmark(path_means, res_folder, quality, obj);
                         end
                     end
                 end
-                %sort_benchmark(res_folder, obj);
+                sort_benchmark(res_folder, obj);
             end
         end
 
