@@ -208,10 +208,6 @@ classdef additional_functions
                     ME=MException('Unknown filetype', '%s files are not supported', type);
                     throw(ME);
             end
-
-            if isa(im_org,'uint8') == false
-                im_org = additional_functions.conv_to_uint8(im_org);
-            end
         end
 
         function tab = load_csv(file)
@@ -219,28 +215,28 @@ classdef additional_functions
             tab = readtable(f_name);
         end
 
-        function im_org = load_tif(im_file)
+        function im_org = load_tiff(im_file)
             f_name = [im_file.folder '\' im_file.name];
-            im_org = imread(f_name);
-            
+            im = imread(f_name);
+            im_org = additional_functions.conv_to_uint8(im);
         end
 
         function im_org = load_bmp(im_file)
             f_name = [im_file.folder '\' im_file.name];
-            im_org = imread(f_name);
-            
+            im = imread(f_name);
+            im_org = additional_functions.conv_to_uint8(im);
         end
 
         function im_org = load_png(im_file)
             f_name = [im_file.folder '\' im_file.name];
-            im_org = imread(f_name);
-           
+            im = imread(f_name);
+            im_org = additional_functions.conv_to_uint8(im);
         end
 
         function im_org = load_jpg(im_file)
             f_name = [im_file.folder '\' im_file.name];
-            im_org = imread(f_name);
-            
+            im = imread(f_name);
+            im_org = additional_functions.conv_to_uint8(im);
         end
 
         function create_folder(path)

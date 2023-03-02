@@ -196,11 +196,10 @@ classdef tune_parameters
 
                             count_means(path_raw, path_means, obj);
                             create_heatmaps(path_means, path_heatmaps, method, filter_type, obj);
-                           % make_benchmark(path_means, res_folder, quality, obj);
+                            make_benchmark(path_means, res_folder, quality, obj);
                         end
                     end
                 end
-                %sort_benchmark(res_folder, obj);
             end
         end
 
@@ -212,10 +211,10 @@ classdef tune_parameters
             % loop over tables with results - count means
             for idx=1:length(raw)
                 tab=additional_functions.load_csv(raw(idx));
-                tabstats = grpstats(tab,["sigma", "filter_size","method","type"], "mean", "DataVars",["PSNR","SSIM", "NIQE", "jpg_PSNR","jpg_SSIM","jpg_NIQE","delta_PSNR","delta_SSIM","delta_NIQE"]);
+                tabstats = grpstats(tab,["quality","sigma", "filter_size","method","type"], "mean", "DataVars",["PSNR","SSIM", "NIQE", "jpg_PSNR","jpg_SSIM","jpg_NIQE","delta_PSNR","delta_SSIM","delta_NIQE"]);
                 tabstats=removevars(tabstats,{'GroupCount' });
                 tab_path = sprintf("%smean.csv",path_means);
-                writetable(tabstats,tab_path,"WriteMode","append");
+                writetable(tabstats,tab_path,"WriteMode", "append");
             end
         end
 
@@ -240,7 +239,6 @@ classdef tune_parameters
 
         function make_benchmark(path_means, res_folder, quality,obj)
             tab_path = sprintf("%smean.csv",path_means);
-            path_benchmarks = sprintf("%s/benchmarks/",res_folder);
             tab=readtable(tab_path); % read means
 
             vars=["mean_delta_PSNR",...
@@ -248,29 +246,51 @@ classdef tune_parameters
             order = ["descend", "descend", "ascend", "descend", "descend", "ascend"];
             
             for i=1:length(vars)
-                benchmark_path = sprintf("%s%s%sbenchmark.csv", path_benchmarks,quality, vars(i));
+                path_benchmarks = sprintf("%s/benchmarks/%s/",res_folder, vars(i));
+                additional_functions.create_folder(path_benchmarks);
+                benchmark_path = sprintf("%sbenchmark.csv", path_benchmarks);
                 tab_row = sortrows(tab, vars(i), order(i));
                 tab_row = tab_row(1,:); % choose first row (the best)
                 writetable(tab_row, benchmark_path,"WriteMode","append");
             end
         end
 
-        function sort_benchmark(res_folder, obj)
+        function make_benchmark_heatmaps(obj)
+            vars=["mean_delta_PSNR",...
+                "mean_delta_SSIM", "mean_delta_NIQE","mean_PSNR","mean_SSIM", "mean_NIQE"];
 
-            path_benchmarks = sprintf("%s/benchmarks/",res_folder);
-            benchmarks = dir(sprintf("%s*.csv",path_benchmarks));
+            
+            titles=["Mean of delta PSNR",...
+                "Mean of delta SSIM", "Mean of delta NIQE", "Mean of PSNR", "Mean of SSIM", "Mean of NIQE"];
+           
 
-            for i=1:length(benchmarks)
-               tab = additional_functions.load_csv(benchmarks(i));
-               filename=sprintf("%s/FinalBenchmark.xlsx",path_benchmarks);
-               writetable(tab,filename,'Sheet','FinalBenchmark','WriteMode','append');
+
+            % Dataset
+            for i=1:length(obj.Datasets)
+                dataset = obj.Datasets(i);
+                res_folder = dataset.results_filepath;
+
+
+                for j=1:length(vars)
+                    path_benchmarks = sprintf("%s/benchmarks/%s/",res_folder, vars(j));
+                    benchmark_path = sprintf("%sbenchmark.csv", path_benchmarks);
+                    tab = readtable(benchmark_path);
+                    column_name=vars(j);
+                    title=titles(j);
+                    h=heatmap(tab,"quality","method", ColorVariable=column_name, Title=title, XLabel="quality", YLabel="method",FontSize=15);
+                    h.Colormap=jet;
+                    heatmap_path = sprintf("%sheatmap.png",path_benchmarks);
+                    saveas(h,strcat(heatmap_path));
+                end
             end
         end
+
 
         function start_image_processing(obj)
             obj=prepare_tabels(obj);
             process_images(obj);
             process_results(obj);
+            make_benchmark_heatmaps(obj);
         end
 
     end

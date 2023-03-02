@@ -8,7 +8,8 @@ classdef quality_metrics
         % im_org - original TIFF file
         % model - NIQE model
         function [im_ssim, im_psnr, im_niqe] = count_metrics(im, im_org, train, model)
-            im_ssim=ssim(im, im_org);
+            [ssimVal, ~]=ssim(im, im_org,"DataFormat","SSC");
+            im_ssim=mean(ssimVal,"all");
             im_psnr=psnr(im, im_org);
 
             if train

@@ -1,7 +1,7 @@
 {"datasets":[
     { "filepath":"../Datasets/BreCaHAD/", "filetype":"tif", "results_filepath":"../Results/BreCaHAD", "cutpoint":[1,1], "save": true, "train":false }
 ],
- "q":[10,20,30,40],
+ "q":[10,30,50,70,90],
  "filters":[
      {"type":"gauss", "sizes":[3, 5, 7], "sigmas":[0.4, 0.7, 1.1, 1.4, 1.7, 2.0, 2.3]}],
  "methods":["method_1", "method_2", "method_3", "blurr"]
