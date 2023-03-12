@@ -1,9 +1,9 @@
 {"datasets":[
-    { "filepath":"../Datasets/BreCaHAD/", "filetype":"tif", "results_filepath":"../Results/BreCaHAD", "cutpoint":[1,1], "save": true, "train":false }
+    { "filepath":"../Datasets/Set5/", "filetype":"png", "results_filepath":"../test2/", "cutpoint":[1,1], "save": true }
 ],
- "q":[10,20,30,40],
+ "q":[10, 20],
  "filters":[
-     {"type":"gauss", "sizes":[3, 5, 7], "sigmas":[0.4, 0.7, 1.1, 1.4, 1.7, 2.0, 2.3]}],
- "methods":["method_1", "method_2", "method_3", "blurr"]
+     {"type":"gauss", "sizes":[3, 5], "sigmas":[1.4, 1.5]}],
+ "methods":["method_1", "method_2", "method_3", "blur"]
 }
 

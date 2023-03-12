@@ -2,10 +2,10 @@ classdef tune_parameters
     %FILE_OPERATIONS Summary of this class goes here
     %   Detailed explanation goes here
     properties
-        Datasets
-        Filters
-        Methods
-        Q
+        Datasets 
+        Filters 
+        Methods 
+        Q 
         TabPattern
     end
 
@@ -28,7 +28,7 @@ classdef tune_parameters
             catch ME
                 if (strcmp(ME.identifier,''))
                     msg = 'File with parameters was invalid. Please check the file and try again.';
-                    causeException = MException('MATLAB:myCode:dimensions',msg);
+                    causeException = MException('MyComponent:InvalidParameters',msg);
                     ME = addCause(ME,causeException);
                 end
                 rethrow(ME);
@@ -39,19 +39,18 @@ classdef tune_parameters
 
             % make a tables for the results
             % gaussian filter
-            t_size_gauss = {'Size' [0 15]};
-            t_vars_gauss = {'VariableTypes', ["string","string", "string", "string", "double", ...
-                "double", "double", "double", "double","double","double","double", "double","double", "double"]};
+            t_size = {'Size' [0 12]};
+            t_vars = {'VariableTypes', ["string","string", "string", "string", "double", ...
+                "double", "double", "double", "double","double","double","double"]};
 
-            t_names_gauss = {'VariableNames', ["quality","name", "type", "method", "sigma", ...
+            t_names = {'VariableNames', ["quality","name", "type", "method", "sigma", ...
                 "filter_size", "jpg_PSNR", "PSNR", "delta_PSNR","jpg_SSIM","SSIM",...
-                "delta_SSIM", "jpg_NIQE", "NIQE", "delta_NIQE"]};
+                "delta_SSIM"]};
 
-            obj.TabPattern = table(t_size_gauss{:}, t_vars_gauss{:}, t_names_gauss{:});
+            obj.TabPattern = table(t_size{:}, t_vars{:}, t_names{:});
         end
 
         function process_images(obj)
-
             % Dataset
             for i=1:length(obj.Datasets)
                 dataset = obj.Datasets(i);
@@ -62,11 +61,6 @@ classdef tune_parameters
 
                 path=sprintf("%s*.%s",dataset.filepath, dataset.filetype);
                 im_files = dir(path);
-
-                model=0;
-                if dataset.train
-                    model=quality_metrics.train_niqe(dataset.filepath, dataset.filetype);
-                end
 
                 % Quality
                 for q=1:length(obj.Q)
@@ -80,7 +74,7 @@ classdef tune_parameters
                         im_jpg = additional_functions.compress_image(im_org, obj.Q(q));
 
                         % count metrics for jpg
-                        [jpg_ssim, jpg_psnr, jpg_niqe] = quality_metrics.count_metrics(im_jpg, im_org, dataset.train, model);
+                        [jpg_ssim, jpg_psnr] = quality_metrics.count_metrics(im_jpg, im_org);
 
 
                         % Filter
@@ -105,8 +99,6 @@ classdef tune_parameters
                                 additional_functions.create_folder(path_heatmaps);
 
                                 % Create folder for images
-
-
                                 path_images="";
 
                                 if dataset.save
@@ -116,7 +108,7 @@ classdef tune_parameters
                                 end
 
                                 obj = compute_parallel_params(obj,filter_type, params, im_org, im_jpg,...
-                                    jpg_psnr, jpg_ssim, jpg_niqe, dataset.save, method, name, path_images, path_raw,dataset.filetype, quality);
+                                    jpg_psnr, jpg_ssim, method, name, path_images, path_raw,dataset.filetype, quality,dataset.save);
 
                             end
                         end
@@ -126,8 +118,7 @@ classdef tune_parameters
         end
 
         function obj = compute_parallel_params(obj,filter_type, params, im_org, im_jpg,...
-                jpg_psnr, jpg_ssim, jpg_niqe, save_file, method, name, path_images,path_raw, type, quality)
-
+                jpg_psnr, jpg_ssim, method, name, path_images,path_raw, type, quality,save_file)
 
             t_tabs=cell(length(params),1);
             for t=1:length(params)
@@ -144,15 +135,14 @@ classdef tune_parameters
                 im=run_artifacts_removal(rem);
 
                 % count metrics
-                [im_ssim, im_psnr, im_niqe] = quality_metrics.count_metrics(im, im_org,0);
+                [im_ssim, im_psnr] = quality_metrics.count_metrics(im, im_org);
                 delta_psnr = quality_metrics.count_delta(im_psnr, jpg_psnr);
                 delta_ssim = quality_metrics.count_delta(im_ssim, jpg_ssim);
-                delta_niqe=quality_metrics.count_delta(im_niqe, jpg_niqe);
 
                 % save row to the table
                 t_tabs{k}(end+1,:) = {quality, name, filter_type,method, ...
                     sigma, filter_size, jpg_psnr, im_psnr, delta_psnr, jpg_ssim,...
-                    im_ssim, delta_ssim, jpg_niqe, im_niqe, delta_niqe};
+                    im_ssim, delta_ssim};
 
                 % save image to a file if save is true
                 if save_file
@@ -175,7 +165,6 @@ classdef tune_parameters
             for i=1:length(obj.Datasets)
                 dataset = obj.Datasets(i);
                 res_folder = dataset.results_filepath;
-
 
                 % Quality
                 for q=1:length(obj.Q)
@@ -211,7 +200,8 @@ classdef tune_parameters
             % loop over tables with results - count means
             for idx=1:length(raw)
                 tab=additional_functions.load_csv(raw(idx));
-                tabstats = grpstats(tab,["quality","sigma", "filter_size","method","type"], "mean", "DataVars",["PSNR","SSIM", "NIQE", "jpg_PSNR","jpg_SSIM","jpg_NIQE","delta_PSNR","delta_SSIM","delta_NIQE"]);
+                tabstats = grpstats(tab,["quality","sigma", "filter_size","method","type"], "mean", ...
+                    "DataVars",["PSNR","SSIM","jpg_PSNR","jpg_SSIM","delta_PSNR","delta_SSIM"]);
                 tabstats=removevars(tabstats,{'GroupCount' });
                 tab_path = sprintf("%smean.csv",path_means);
                 writetable(tabstats,tab_path,"WriteMode", "append");
@@ -221,9 +211,9 @@ classdef tune_parameters
         function create_heatmaps(path_means, path_heatmaps, method, filter_type,obj)
 
             heatmap_vars=["mean_delta_PSNR",...
-                "mean_delta_SSIM", "mean_delta_NIQE", "mean_PSNR", "mean_SSIM", "mean_NIQE"];
+                "mean_delta_SSIM","mean_PSNR", "mean_SSIM"];
             titles=["Mean of delta PSNR",...
-                "Mean of delta SSIM", "Mean of delta NIQE", "Mean of PSNR", "Mean of SSIM", "Mean of NIQE"];
+                "Mean of delta SSIM", "Mean of PSNR", "Mean of SSIM"];
 
             tab_path = sprintf("%smean.csv",path_means);
             tab=readtable(tab_path);
@@ -239,37 +229,32 @@ classdef tune_parameters
 
         function make_benchmark(path_means, res_folder, quality,obj)
             tab_path = sprintf("%smean.csv",path_means);
-            tab=readtable(tab_path); % read means
+            tab=readtable(tab_path); 
 
             vars=["mean_delta_PSNR",...
-                "mean_delta_SSIM", "mean_delta_NIQE","mean_PSNR","mean_SSIM", "mean_NIQE"];
-            order = ["descend", "descend", "ascend", "descend", "descend", "ascend"];
+                "mean_delta_SSIM","mean_PSNR","mean_SSIM"];
             
             for i=1:length(vars)
                 path_benchmarks = sprintf("%s/benchmarks/%s/",res_folder, vars(i));
                 additional_functions.create_folder(path_benchmarks);
                 benchmark_path = sprintf("%sbenchmark.csv", path_benchmarks);
-                tab_row = sortrows(tab, vars(i), order(i));
-                tab_row = tab_row(1,:); % choose first row (the best)
+                tab_row = sortrows(tab, vars(i), "descend");
+                tab_row = tab_row(1,:); 
                 writetable(tab_row, benchmark_path,"WriteMode","append");
             end
         end
 
         function make_benchmark_heatmaps(obj)
             vars=["mean_delta_PSNR",...
-                "mean_delta_SSIM", "mean_delta_NIQE","mean_PSNR","mean_SSIM", "mean_NIQE"];
+                "mean_delta_SSIM", "mean_PSNR","mean_SSIM"];
 
             
             titles=["Mean of delta PSNR",...
-                "Mean of delta SSIM", "Mean of delta NIQE", "Mean of PSNR", "Mean of SSIM", "Mean of NIQE"];
-           
+                "Mean of delta SSIM", "Mean of PSNR", "Mean of SSIM"];
 
-
-            % Dataset
             for i=1:length(obj.Datasets)
                 dataset = obj.Datasets(i);
                 res_folder = dataset.results_filepath;
-
 
                 for j=1:length(vars)
                     path_benchmarks = sprintf("%s/benchmarks/%s/",res_folder, vars(j));
@@ -285,8 +270,7 @@ classdef tune_parameters
             end
         end
 
-
-        function start_image_processing(obj)
+        function run(obj)
             obj=prepare_tabels(obj);
             process_images(obj);
             process_results(obj);

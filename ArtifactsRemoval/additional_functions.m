@@ -6,8 +6,6 @@ classdef additional_functions
         function true_edges = delete_false_edges(im, n, m, cut_point)
             %DELETE_FALSE_EDGES function to detect jpg compression grid
             % copies the real edges and removes false edges from the image
-            % for binary images it returns 2d logical array
-            % for double images it returns 2d double array
             % im - image
             % n, m - size of an image
             % cut_point - vector, containing the image grid coordinates,
@@ -57,127 +55,6 @@ classdef additional_functions
             end
         end
 
-        function compress_files(im_path, res_path, Q)
-            %COMPRESS_FILES Function to compress files with jpeg algorithm.
-            % im_path - folder with files to compress
-            % res_path - folder with results (must be different than im_path)
-            % Q - vector of compression quality parameters
-
-            im_files = dir(im_path);
-
-            % set a path for result images
-            images_folder = strcat(res_path,'\Q');
-
-            for i=1:length(Q)
-                % Check if folder exists, if not create it
-                images_folder_q=strcat(images_folder,string(Q(i)));
-
-                if isfolder(images_folder_q) == false
-                    mkdir(images_folder_q);
-                end
-
-                for ind=3:length(im_files)
-                    % read an image and convert it into uint8
-                    im_name = strsplit(im_files(ind).name, '.');
-                    f_name = [im_files(ind).folder '\' im_files(ind).name];
-                    im = imread(f_name);
-
-                    % convert to uint8
-                    im_org = additional_functions.conv_to_uint8(im);
-
-                    % set image name
-                    res_name=strcat(images_folder_q,'\',im_name(1),'.jpg');
-
-                    % compress to jpg with quality Q
-                    imwrite(im_org, res_name, 'jpg', 'Quality', Q(i));
-                end
-            end
-        end
-
-        function perform_segmentation(im_path, res_filepath)
-            %PERFORM_SEGMENTATION Function  to perform segmentation
-            %   filepath - directory with images to segment
-            %   res_filepath - directory for results
-            im_files = dir(im_path);
-
-            for ind=3:length(im_files)
-                im_name = strsplit(im_files(ind).name, '.');
-                name=string(im_name(1));
-                f_name = [im_files(ind).folder '\' im_files(ind).name];
-                he = imread(f_name);
-                lab_he = rgb2lab(he);;
-                ab = lab_he(:,:,2:3);
-                ab = im2single(ab);
-                numColors = 3;
-                L2 = imsegkmeans(ab,numColors);
-                B2 = labeloverlay(he,L2);
-                imshow(B2);
-                res_filename=strcat(res_filepath,name,'_segm.png');
-                imwrite(B2,res_filename);
-            end
-        end
-
-        function test_algorithm(method, sigma, filter_size, filter_type, quality)
-            %TEST_ALGORITHM Function to test algorithms on selected image
-            %   method - chosen method
-            %   filter_size - size of filter kernel
-            %   filter_type - type of filter
-            %   quality - compression quality parameter
-            %   siqma - sigma for Gaussian filter
-
-            % read an .tif image an convert it to uint8
-            [im_file, im_path] = uigetfile({'*.tif' ; '*.tiff'}, 'Select an image');
-            im_org_uint16 = imread([im_path '\' im_file]);
-            im_org = additional_functions.conv_to_uint8(im_org_uint16);
-
-            % compress to jpg
-            imwrite(im_org, 'jpg_conv.jpg', 'jpg', 'Quality', quality);
-            im_jpg= imread('jpg_conv.jpg');
-
-            rem = remove_artifacts(im_jpg, [1 1], sigma,...
-                filter_size,filter_type, method);
-
-            im=run_artifacts_removal(rem);
-
-            rect=[100 100 200 200];
-            crop_im=imcrop(im, rect);
-            crop_org=imcrop(im_org, rect);
-            crop_jpg=imcrop(im_jpg, rect);
-            montage({crop_org, crop_jpg, crop_im}, "Size",[1 3]);
-                title("Original                      Compressed                 Processed");
-        end
-
-        function auto_removal(im_dir, q, res_dir)
-            % AUTO_REMOVAL - removes artifacts from jpg images,
-            % sigma is based on q parameter
-            % im_dir - directory with .jpg images
-            % q - compression quality parameter
-            % res_dir - directory to save result files
-            im_files = dir(strcat(im_dir,"*.jpg"));
-            
-            a=21.68;
-            b=0.6652;
-            c=6.01;
-            d=-4.186;
-
-            sigma=c+(b-c)/(1+(q/a)^d);
-
-            for ind=1:length(im_files)
-                % read an image and convert it into uint8
-                im_name = strsplit(im_files(ind).name, '.');
-                name=string(im_name(1));
-                f_name = [im_files(ind).folder '\' im_files(ind).name];
-                im_jpg = imread(f_name);
-
-                rem = remove_artifacts(im_jpg, [1 1], sigma,...
-                    3, 'gauss', 'method_2');
-                im=run_artifacts_removal(rem);
-
-                %save image
-                imwrite(im, strcat(res_dir,name,'processed.png'), 'png');
-            end
-        end
-
         function jpg = compress_image(image, q)
             %READ_IMAGE
             % Function to load the image
@@ -215,30 +92,30 @@ classdef additional_functions
         end
 
         function tab = load_csv(file)
-            f_name = [file.folder '\' file.name];
+            f_name = [file.folder '/' file.name];
             tab = readtable(f_name);
         end
 
         function im_org = load_tif(im_file)
-            f_name = [im_file.folder '\' im_file.name];
+            f_name = [im_file.folder '/' im_file.name];
             im_org = imread(f_name);
             
         end
 
         function im_org = load_bmp(im_file)
-            f_name = [im_file.folder '\' im_file.name];
+            f_name = [im_file.folder '/' im_file.name];
             im_org = imread(f_name);
             
         end
 
         function im_org = load_png(im_file)
-            f_name = [im_file.folder '\' im_file.name];
+            f_name = [im_file.folder '/' im_file.name];
             im_org = imread(f_name);
            
         end
 
         function im_org = load_jpg(im_file)
-            f_name = [im_file.folder '\' im_file.name];
+            f_name = [im_file.folder '/' im_file.name];
             im_org = imread(f_name);
             
         end
@@ -253,7 +130,7 @@ classdef additional_functions
                 catch ME
                     if (strcmp(ME.identifier,''))
                         msg = sprintf("Folder creation failed. Path: %s",path);
-                        causeException = MException('MATLAB:myCode:dimensions',msg);
+                        causeException = MException('MyComponent:fileException',msg);
                         ME = addCause(ME,causeException);
                     end
                     rethrow(ME);

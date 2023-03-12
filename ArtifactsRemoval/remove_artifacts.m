@@ -34,8 +34,8 @@ classdef remove_artifacts
                     im_res = run_method_2(obj);
                 case 'method_3'
                     im_res = run_method_3(obj);
-                case 'blurr'
-                    im_res = run_blurr(obj);
+                case 'blur'
+                    im_res = run_blur(obj);
             end
 
             % cast to uint8
@@ -66,8 +66,7 @@ classdef remove_artifacts
 
                 % detect edges
                 [T, ~]=graythresh(gmag_grayscale); % Computes treshold value (Otsu algorithm)
-                % doesn't work on gpuArray - use graytresh instead
-                % all_edges_bin(:,:,i) = imbinarize(gmag_grayscale_bin, 'global'); %Otsu for three channel edges validation
+               
                 gmag_grayscale_bin = gmag_grayscale;
                 gmag_grayscale_bin(gmag_grayscale_bin <= T) = 0; 
                 gmag_grayscale_bin(gmag_grayscale_bin > T) = 1;  
@@ -118,8 +117,6 @@ classdef remove_artifacts
                 % detect edges
                 [T, ~]=graythresh(gmag_grayscale); % Computes treshold value (Otsu algorithm)
 
-                % doesn't work on gpuArray - use graytresh instead
-                % all_edges_bin(:,:,i) = imbinarize(gmag_grayscale_bin, 'global'); %Otsu for three channel edges validation
                 gmag_grayscale_bin = gmag_grayscale;
                 gmag_grayscale_bin(gmag_grayscale_bin <= T) = 0; 
                 gmag_grayscale_bin(gmag_grayscale_bin > T) = 1;  
@@ -154,7 +151,7 @@ classdef remove_artifacts
             end
         end
 
-        function im_res = run_blurr(obj)
+        function im_res = run_blur(obj)
             %RUN_MULTILEVEL_TRESHOLDING artifact removal method
             % function uses multilevel tresholding in order to create a map of edges
             im=im2double(obj.Image);
@@ -193,8 +190,6 @@ classdef remove_artifacts
                 % detect edges
                 [T, ~]=graythresh(gmag_grayscale); % compute treshold value (Otsu algorithm)
 
-                % doesn't work on gpuArray - use graytresh instead
-                % all_edges_bin(:,:,i) = imbinarize(gmag_grayscale_bin, 'global'); %Otsu for three channel edges validation
                 gmag_grayscale_bin = gmag_grayscale;
                 gmag_grayscale_bin(gmag_grayscale_bin <= T) = 0; 
                 gmag_grayscale_bin(gmag_grayscale_bin > T) = 1;  
@@ -239,7 +234,6 @@ classdef remove_artifacts
                 im_res(:,:,i)=im_res(:,:,i).*map_edges+(1.- map_edges).*im_res_bin(:,:,i);
             end
         end
-
 
     end
 end

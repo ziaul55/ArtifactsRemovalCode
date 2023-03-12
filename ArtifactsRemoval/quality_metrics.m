@@ -7,16 +7,10 @@ classdef quality_metrics
         % im - processed image or jpg
         % im_org - original TIFF file
         % model - NIQE model
-        function [im_ssim, im_psnr, im_niqe] = count_metrics(im, im_org, train, model)
+        function [im_ssim, im_psnr] = count_metrics(im, im_org)
             [ssimVal, ~]=ssim(im, im_org,"DataFormat","SSC");
             im_ssim=mean(ssimVal,"all");
-            im_psnr=psnr(im, im_org);
-
-            if train
-                 im_niqe=niqe(im, model);
-            else
-                im_niqe=niqe(im);
-            end
+            im_psnr=psnr(im, im_org, "DataFormat","SSC");
         end
 
         %COUNT_DELTA function to count percentage difference between
@@ -25,16 +19,6 @@ classdef quality_metrics
         % im_jpg - metric value for jpg image
         function delta = count_delta(im_metric, jpg_metric)
             delta=(im_metric - jpg_metric) / jpg_metric * 100;
-        end
-        
-        %TRAIN_NIQE function to create NIQE model 
-        % filepath - path to a directory with TIFF images
-        % extension - file extension
-        function model = train_niqe(filepath, extenstion)
-            setDir = fullfile(filepath);
-            extension = sprintf('.%s', extenstion);
-            imds = imageDatastore(setDir,'FileExtensions',{extension});
-            model = fitniqe(imds);
         end
     end
 end
