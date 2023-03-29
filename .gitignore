@@ -1,5 +1,6 @@
 **/Datasets
-**/here3
+**/outputFolderWSI
 *.svs
 *.tiff
 *.avs
+*.bin
