@@ -1,13 +1,19 @@
-function im_res = method2_WSI(im, params, sigma, size_filt)
+function im_res = method2_WSI(im, params, sigma, size_filt, gpu)
 %METHOD2_WSI function to remove compression artifacts from a WSI image
 % im - image (or block) to process
 % params - vector of threshold values (for each color channel)
 % size - size of the gaussian filter
 % sigma - stddev of the gaussian filter
+% gpu - use gpu or not
 % returns im_res - processed image (or block)
-% * The function is suitable for block processing
+% * This function is suitable for block processing
          
             im=im2double(im);
+
+            % create a gpu array
+            if gpu
+                im=gpuArray(im);
+            end
             filt=filters('gauss', size_filt, sigma);
 
             % preallocate memory
@@ -59,4 +65,9 @@ function im_res = method2_WSI(im, params, sigma, size_filt)
                     filter_mask, 'symmetric', 'conv') ./ W;
             end
             im_res=im2uint8(im_res);
+
+            % gather block from gpu
+            if gpu
+                im_res=gather(im_res);
+            end
         end
