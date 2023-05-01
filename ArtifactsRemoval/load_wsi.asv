@@ -67,12 +67,12 @@ imwrite(l7,"test.tiff","tiff","WriteMode","append","Description",data.ImageDescr
 
 
 %%
-inFile        = 'test2.tif';
+inFile        = 'example.tif';
 inFileInfo    = imfinfo(inFile);
-outFile       = 'test.tif';
+outFile       = 'out.tif';
 tileSize      = [128, 128]; % has to be a multiple of 16.
 outFileWriter = bigTiffWriter(outFile, inFileInfo(1).Height, inFileInfo(2).Width, tileSize(1), tileSize(2));
-blockproc(inFile, tileSize, 'Destination', outFileWriter);
+blockproc(inFile, tileSize, @(b) flipdim(b.data,3), 'Destination', outFileWriter);
 outFileWriter.close();
 
 %img=imread(['test2.tiff'],'Index',1,'PixelRegion', {[1,16000],[1,16000]});
