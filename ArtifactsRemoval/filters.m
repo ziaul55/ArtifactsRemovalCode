@@ -23,6 +23,8 @@ classdef filters
             switch obj.Type
                 case 'gauss'
                     mask = gauss_filter(obj);
+                case 'avg'
+                    mask = avg_filter(obj);
                 otherwise
             end
         end
@@ -35,6 +37,11 @@ classdef filters
              size=[obj.Size, obj.Size];
              sigma=[obj.Sigma, obj.Sigma];
              mask = images.internal.createGaussianKernel(sigma, size);
+        end
+
+        function mask = avg_filter(obj)
+             size=[obj.Size, obj.Size];
+             mask = fspecial("average", size);
         end
 
     end

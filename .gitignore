@@ -1,1 +1,10 @@
 **/Datasets
+**/outputFolderWSI
+*.svs
+*.tiff
+*.avs
+*.bin
+*.svs
+*.tif
+*.png
+*.jpg
