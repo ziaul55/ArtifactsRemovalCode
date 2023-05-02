@@ -16,19 +16,13 @@ parallel = true;                  % use parallel pool
 filt_size = 3;                    % size of the filter
 sigma = 1.1;                      % std of the gaussian filter
 res_path = "result.svs";          % path for the results
-gpu=true;                        % use gpu or not 
+gpu=true;                         % use gpu or not 
 
 % parpool params
 numberOfWorkers = 3;
-% pool = parpool(numberOfWorkers);
-% [availableGPUs,gpuIndx] = gpuDeviceCount("available");
-% 
-% parpool('Processes',numel(useGPUs));
-% mpiprofile on % collect prarallel profile data
+pool = parpool(numberOfWorkers);
 
-parpool('local',6);
-spmd, gpuDevice(1); end
-
+% measure time
 tic
 load_wsi_func(filepath, output, blocksize, parallel, filt_size, sigma, res_path, gpu); % handle to function
 toc
