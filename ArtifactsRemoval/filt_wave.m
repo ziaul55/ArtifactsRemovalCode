@@ -17,4 +17,8 @@ end
 data_filt = wdencmp('gbl',C,S,opts.wname,opts.level,thr,'s',opts.keepapp);
 data_filt = max(0,data_filt);
 
-figure; subplot(1,2,1);imshow(255-data,[]); subplot(1,2,2); imshow(255-data_filt,[])
+figure; 
+%subplot(1,2,1);
+%imshow(255-data,[]); 
+%subplot(1,2,2); 
+imshow(255-data_filt,[])

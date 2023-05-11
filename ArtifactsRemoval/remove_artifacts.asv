@@ -53,13 +53,13 @@ classdef remove_artifacts
 
         function im_res = run_wave(obj)
             im=im2double(obj.Image);
-
-            opts.wname ='db3';           % wavelet type
-            opts.thr_type = 'penalized'; % {default} - use ddencmp function - default values for denoising or compression                                 
-                                         % {penalized} - Estimate the noise standard deviation from the detail coefficients at given level.
-            opts.alpha = 5;              % penalization parameter
-            opts.level = 2;              % decomposition level
-            opts.keepapp = 1;            % Threshold approximation setting, If keepapp = 1, the approximation coefficients are not thresholded.
+            
+            opts.wname ='db3'; %wavelet type
+            opts.thr_type = 'default'; % {default} - use ddencmp function - default values for denoising or compression                                 
+                                       % {penalized} - Estimate the noise standard deviation from the detail coefficients at given level.
+            opts.alpha = 5;
+            opts.level = 2;
+            opts.keepapp=0;
 
             [n, m, d] = size(im);
             im_res = zeros(n, m, d, 'double');
