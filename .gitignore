@@ -8,3 +8,9 @@
 *.tif
 *.png
 *.jpg
+ArtifactsRemoval/filt_CT.asv
+*.csv
+Results/2DwaveletFilterDb3/parameters.txt
+*.asv
+*.asv
+Results/2DwaveletFilterDb3.zip

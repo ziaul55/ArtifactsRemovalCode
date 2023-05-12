@@ -271,8 +271,8 @@ classdef tune_parameters
         end
 
         function run(obj)
-            obj=prepare_tabels(obj);
-            process_images(obj);
+            % obj=prepare_tabels(obj);
+            % process_images(obj);
             process_results(obj);
             make_benchmark_heatmaps(obj);
         end

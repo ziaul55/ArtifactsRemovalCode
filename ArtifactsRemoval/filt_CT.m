@@ -1,5 +1,5 @@
 function data_filt = filt_CT(data,opts)
-
+% https://www.mathworks.com/matlabcentral/fileexchange/10049-nonsubsampled-contourlet-toolbox
 im = imresize(double(data)/max(double(data(:))),[512,512]);
 sigma = std(im(:));
 
@@ -27,6 +27,8 @@ hh1 = c(end-fssize+1:end); %finest wavelet coefs
 esigma = median(abs(hh1(:)))/.6745;
 ve = esigma^2;
 
+
+valueC=2.^(-length(opts.nlevs)+1:1:0);
 % Subband dependent thresholding
 valueNC = cell(length(valueC),1);
 valueNC{1} = valueC{1}; % Lowest component

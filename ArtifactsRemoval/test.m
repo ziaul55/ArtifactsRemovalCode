@@ -14,7 +14,7 @@ opts.poly_deg = 4;      %IPF - degree of fitting polynomial
 opts.ball_size = 20;    %RB - size of rolling ball element
 opts.mask = 3;          %MEDF,MMWF - moving window size
 opts.win_num = 5;       %2DMF - no. of overlapping fragments
-opts.win_lap = 10;      %2DMF - overlap [%]
+opts.win_lap = 30;      %2DMF - overlap [%]
 opts.alpha = 5;         %WAVE - penalization parameter
 opts.wname = 'db3';     %WAVE - wavelet type
 opts.level = 2;         %WAVE - decomposition level
@@ -27,11 +27,17 @@ opts.level = 2;              % decomposition level
 opts.keepapp = 1;            % Threshold approximation setting, If keepapp = 1, the approximation coefficients are not thresholded.
 
 
+
+opts.pfilt='db4';
+opts.dfilt='db3';
+opts.nlevs=3;
+
 im_jpg=im2double(im_jpg);
-data_filt(:,:,1) = filt_wave(im_jpg(:,:,1),opts);
-data_filt(:,:,2) = filt_wave(im_jpg(:,:,2),opts);
-data_filt(:,:,3) = filt_wave(im_jpg(:,:,3),opts);
+data_filt(:,:,1) = filt_CT(im_jpg(:,:,1),opts);
+data_filt(:,:,2) = filt_CT(im_jpg(:,:,2),opts);
+data_filt(:,:,3) = filt_CT(im_jpg(:,:,3),opts);
 imshow(data_filt);
+
 
 
 % %         data_filt = filt_CT(data_filt,opts);

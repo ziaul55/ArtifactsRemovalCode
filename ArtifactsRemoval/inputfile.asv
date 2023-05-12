@@ -1,9 +1,0 @@
-{"datasets":[
-    { "filepath":"../Datasets/BreCaHAD/", "filetype":"tif", "results_filepath":"../Results/BreCaHAD", "cutpoint":[1,1] , "save": true}
-],
- "q":[10,20,30, 40],
- "filters":[
-     {"type":"wave", "sizes":[3, 5], "sigmas":[1, 1.5]}],
- "methods":["wave"]
-}
-
