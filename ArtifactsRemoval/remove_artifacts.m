@@ -207,12 +207,17 @@ classdef remove_artifacts
         end
 
         function im_res = run_imdiffusse(obj)
+
             im=im2double(obj.Image);
             [n, m, d] = size(im);
 
+           
+
             im_res=zeros(n,m,d,'double');
             for i=1:d
-                im_res(:,:,i) = imdiffusefilt(im(:,:,i));
+                 [gradThresh,numIter] = imdiffuseest(im(:,:,i), "ConductionMethod","exponential","Connectivity","minimal");
+                im_res(:,:,i) = imdiffusefilt(im(:,:,i),'GradientThreshold', ...
+                gradThresh,'NumberOfIterations',numIter,"ConductionMethod","exponential","Connectivity","minimal");
             end
         end
 
