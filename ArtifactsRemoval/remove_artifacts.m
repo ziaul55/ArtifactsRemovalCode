@@ -39,6 +39,8 @@ classdef remove_artifacts
                         im_res = run_method_2_wave(obj);
                     elseif obj.FilterType == "guided"
                         im_res = run_method_2_imguided(obj);
+                    elseif obj.FilterType == "non_local_means"
+                        im_res = run_method_2_imlmfilt(obj);
                     else
                         im_res = run_method_2(obj);
                     end
@@ -197,7 +199,41 @@ classdef remove_artifacts
                     im_res = run_blur_wiener(obj);
                 case 'guided'
                     im_res = run_blur_guided(obj);
+                case 'non_local_means'
+                    im_res = run_non_local_means(obj);
+                case 'imdiffusse'
+                    im_res = run_imdiffusse(obj);
             end
+        end
+
+        function im_res = run_imdiffusse(obj)
+            im=im2double(obj.Image);
+            [n, m, d] = size(im);
+
+            im_res=zeros(n,m,d,'double');
+            for i=1:d
+                im_res(:,:,i) = imdiffusefilt(im(:,:,i));
+            end
+        end
+
+        function im_res = run_non_local_means(im)
+            im=im2double(obj.Image);
+            im = rgb2lab(im);
+
+            % Extract a homogeneous L*a*b patch from the noisy background to compute the noise standard deviation.
+            roi = [210,24,52,41];
+            patch = imcrop(im,roi);
+
+            patchSq = patch.^2;
+            edist = sqrt(sum(patchSq,3));
+            patchSigma = sqrt(var(edist(:)));
+
+           % Set the 'DegreeOfSmoothing' value to be higher than the standard deviation of the patch. 
+           % Filter the noisy L*a*b* image using non-local means filtering.
+
+           DoS = 1.05*patchSigma;
+           im_res = imnlmfilt(im,'DegreeOfSmoothing',DoS);
+           im_res = lab2rgb(im_res,'Out','double');
         end
 
         function im_res = run_blur_guided(obj)
@@ -409,6 +445,124 @@ classdef remove_artifacts
                 % filter whole image layer
                 im_res(:,:,i) = imguidedfilter(im(:,:,i) .* map_edges, ...
                     "DegreeOfSmoothing", 0.004, "NeighborhoodSize",3) ./ W;               
+            end
+        end
+
+%         function im_res = run_method_2_imlmfilt(obj)
+%             im=im2double(obj.Image);
+%             filter_size=obj.FilterSize;
+% 
+%             % preallocate memory
+%             [n, m, d] = size(im);
+%             im_res=zeros(n, m, d, "double");
+%             all_edges = zeros(n, m, d, 'double'); % now numbers not logical values
+%             all_edges_bin=zeros(n,m,d,'logical'); % to detect ones in three channels
+%             % detect all edges for each image layer
+%             for i=1:d
+%                 % extract a layer
+%                 layer = im(:,:,i);
+%                 % count gradients
+%                 [gmag, ~] = imgradient(layer, 'central');
+%                 gmag_grayscale = mat2gray(gmag);
+%                 % detect edges
+%                 [T, ~]=graythresh(gmag_grayscale); % compute treshold value (Otsu algorithm)
+% 
+%                 gmag_grayscale_bin = gmag_grayscale;
+%                 gmag_grayscale_bin(gmag_grayscale_bin <= T) = 0;
+%                 gmag_grayscale_bin(gmag_grayscale_bin > T) = 1;
+%                 all_edges_bin(:,:,i)=gmag_grayscale_bin;
+% 
+%                 gmag_grayscale(gmag_grayscale <= T) = 0; % if pixel value is below treshold replace it with 0
+%                 gmag_grayscale(gmag_grayscale > T) = gmag_grayscale(gmag_grayscale > T) - T;  % (piksel-treshold)
+%                 all_edges(:,:,i) = gmag_grayscale ./(1-T); %(piksel - treshold)/(1-treshold) or 0/(1-treshold)=0
+%             end
+% 
+%             % Prepare binary map of edges
+%             im_edges_binary=logical(sum(all_edges_bin, 3) == 3);
+%             im_edges_binary=additional_functions.delete_false_edges(im_edges_binary, n, m, obj.CutPoint);
+%             im_edges_binary_open = imopen(im_edges_binary, strel('square', 2));
+% 
+%             for i=1:d
+%                 im_edges=all_edges(:,:,i).*im_edges_binary_open;
+%                 map_edges = imcomplement(im_edges);
+% 
+%                 % make a weight map
+%                 % W = imfilter(map_edges, filter_mask, 'symmetric', 'conv');
+%                 W = imnlmfilt(map_edges, "DegreeOfSmoothing",0.01);
+% 
+%                 % filter whole image layer
+%                 im_res(:,:,i) = imnlmfilt(im(:,:,i) .* map_edges,"DegreeOfSmoothing",0.01) ./ W;
+%             end
+%         end
+
+
+        function im_res = run_method_2_imlmfilt(obj)
+            im=im2double(obj.Image);
+            filter_size=obj.FilterSize;
+
+            % preallocate memory
+            [n, m, d] = size(im);
+            im_res=zeros(n, m, d, "double");
+            W=zeros(n, m, d, "double");
+            all_edges = zeros(n, m, d, 'double'); % now numbers not logical values
+            all_edges_bin=zeros(n,m,d,'logical'); % to detect ones in three channels
+            % detect all edges for each image layer
+            for i=1:d
+                % extract a layer
+                layer = im(:,:,i);
+                % count gradients
+                [gmag, ~] = imgradient(layer, 'central');
+                gmag_grayscale = mat2gray(gmag);
+                % detect edges
+                [T, ~]=graythresh(gmag_grayscale); % compute treshold value (Otsu algorithm)
+
+                gmag_grayscale_bin = gmag_grayscale;
+                gmag_grayscale_bin(gmag_grayscale_bin <= T) = 0;
+                gmag_grayscale_bin(gmag_grayscale_bin > T) = 1;
+                all_edges_bin(:,:,i)=gmag_grayscale_bin;
+
+                gmag_grayscale(gmag_grayscale <= T) = 0; % if pixel value is below treshold replace it with 0
+                gmag_grayscale(gmag_grayscale > T) = gmag_grayscale(gmag_grayscale > T) - T;  % (piksel-treshold)
+                all_edges(:,:,i) = gmag_grayscale ./(1-T); %(piksel - treshold)/(1-treshold) or 0/(1-treshold)=0
+            end
+
+            % Prepare binary map of edges
+            im_edges_binary=logical(sum(all_edges_bin, 3) == 3);
+            im_edges_binary=additional_functions.delete_false_edges(im_edges_binary, n, m, obj.CutPoint);
+            im_edges_binary_open = imopen(im_edges_binary, strel('square', 2));
+
+            for i=1:d
+                im_edges=all_edges(:,:,i).*im_edges_binary_open;
+                map_edges = imcomplement(im_edges);
+
+                % make a weight map
+                % W = imfilter(map_edges, filter_mask, 'symmetric', 'conv');
+                W(:,:,i) = imnlmfilt(map_edges, "DegreeOfSmoothing",0.01);
+
+                % multiply img by edge-maps
+                im_res(:,:,i) = im(:,:,i) .* map_edges;
+            end
+
+            
+            im_res = rgb2lab(im_res);
+
+            % Extract a homogeneous L*a*b patch from the noisy background to compute the noise standard deviation.
+            roi = [210,24,52,41];
+            patch = imcrop(im_res,roi);
+
+            patchSq = patch.^2;
+            edist = sqrt(sum(patchSq,3));
+            patchSigma = sqrt(var(edist(:)));
+
+            % Set the 'DegreeOfSmoothing' value to be higher than the standard deviation of the patch.
+            % Filter the noisy L*a*b* image using non-local means filtering.
+
+            DoS = 1.05*patchSigma;
+           im_res = imnlmfilt(im_res,'DegreeOfSmoothing',DoS);
+           im_res = lab2rgb(im_res,'Out','double');
+
+            for i=1:d
+                im_res(:,:,i) = im_res(:,:,i)/W(i);
             end
         end
 
