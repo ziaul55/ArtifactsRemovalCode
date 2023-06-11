@@ -35,6 +35,8 @@ classdef remove_artifacts
                         im_res = run_method_2_wiener(obj);
                     elseif obj.FilterType == "median"
                         im_res = run_method_2_median(obj);
+                    elseif obj.FilterType == "wave"
+                        im_res = run_method_2_wave(obj);
                     else
                         im_res = run_method_2(obj);
                     end
@@ -44,6 +46,8 @@ classdef remove_artifacts
                     im_res = run_blur(obj);
                 case 'wave'
                     im_res = run_wave(obj);
+                case 'method_2_wave'
+                    im_res = run_method_2_wave(obj);
             end
 
             % cast to uint8
@@ -189,6 +193,18 @@ classdef remove_artifacts
                     im_res = run_blur_median(obj);
                 case 'wiener'
                     im_res = run_blur_wiener(obj);
+                case 'guided'
+                    im_res = run_blur_guided(obj);
+            end
+        end
+
+        function im_res = run_blur_guided(obj)
+            im=im2double(obj.Image);
+            [n, m, d] = size(im);
+
+            im_res=zeros(n,m,d,'double');
+            for i=1:d
+                im_res(:,:,i) = imguidedfilter(im(:,:,i), "DegreeOfSmoothing", 0.004, "NeighborhoodSize",3);
             end
         end
 
@@ -394,6 +410,74 @@ classdef remove_artifacts
                
             end
         end
+
+
+        function im_res = run_method_2_wave(obj)
+
+            im=im2double(obj.Image);
+            filter_type=obj.FilterType;
+            filter_size=obj.FilterSize;
+      
+
+            opts.wname ='db4';           % wavelet type
+            opts.thr_type = 'default'; % {default} - use ddencmp function - default values for denoising or compression
+            % {penalized} - Estimate the noise standard deviation from the detail coefficients at given level.
+            opts.alpha = 2;              % penalization parameter
+            opts.level = 5;              % decomposition level
+            opts.keepapp = 0;            % Threshold approximation setting, If keepapp = 1, the approximation coefficients are not thresholded.
+
+
+            % preallocate memory
+            [n, m, d] = size(im);
+            im_res=zeros(n, m, d, "double");
+            all_edges = zeros(n, m, d, 'double');
+            all_edges_bin=zeros(n,m,d,'logical'); % to detect ones in three channels
+            % detect all edges for each image layer
+            for i=1:d
+                % extract a layer
+                layer = im(:,:,i);
+                % count gradients
+                [gmag, ~] = imgradient(layer, 'central');
+                gmag_grayscale = mat2gray(gmag);
+                % detect edges
+                [T, ~]=graythresh(gmag_grayscale); % compute treshold value (Otsu algorithm)
+
+                gmag_grayscale_bin = gmag_grayscale;
+                gmag_grayscale_bin(gmag_grayscale_bin <= T) = 0;
+                gmag_grayscale_bin(gmag_grayscale_bin > T) = 1;
+                all_edges_bin(:,:,i)=gmag_grayscale_bin;
+
+                gmag_grayscale(gmag_grayscale <= T) = 0; % if pixel value is below treshold replace it with 0
+                gmag_grayscale(gmag_grayscale > T) = gmag_grayscale(gmag_grayscale > T) - T;  % (piksel-treshold)
+                all_edges(:,:,i) = gmag_grayscale ./(1-T);
+            end
+
+
+            filter_type=obj.FilterType;
+            filter_size=obj.FilterSize;
+            sigm=obj.Sigma;
+            filt=filters(filter_type, filter_size, sigm);
+            filter_mask=make_filter(filt);
+
+            % Prepare binary map of edges
+            im_edges_binary=logical(sum(all_edges_bin, 3) == 3);
+            im_edges_binary=additional_functions.delete_false_edges(im_edges_binary, n, m, obj.CutPoint);
+            im_edges_binary_open = imopen(im_edges_binary, strel('square', 2));
+
+            for i=1:d
+                im_edges=all_edges(:,:,i).*im_edges_binary_open;
+                map_edges = imcomplement(im_edges);
+
+                % make a weight map
+                W = imfilter(map_edges,filter_mask, 'symmetric', 'conv');
+
+                % filter whole image layer
+                im_res(:,:,i) = wiener2(im(:,:,i) .* map_edges, ...
+                    [3 3]) ./ W;
+
+            end
+        end
+
 
 
     end

@@ -46,7 +46,9 @@ classdef additional_functions
             %filter_sizes - vector of filter sizes
             params=cell(length(sigmas)*length(filter_sizes),2);
             k=0;
-            for i=0:length(params)-1
+            x=size(params);
+            
+            for i=0:x(1)-1
                 if(mod(i,length(sigmas))==0)
                     k=k+1;
                 end

@@ -125,7 +125,8 @@ classdef tune_parameters
                 t_tabs{t}=obj.TabPattern;
             end
 
-            parfor k=1:length(params)
+            x=size(params);
+            parfor k=1:x(1)
                 param=params(k,:);
                 sigma=cell2mat(param(1,1));
                 filter_size=cell2mat(param(1,2));
@@ -151,7 +152,7 @@ classdef tune_parameters
                 end
             end
 
-            for idx=1:length(params)
+            for idx=1:x(1)
                 param=params(idx,:);
                 tab_path = sprintf("%ssigma_%.1ff_size%1.0f_%s.csv",path_raw, string(param(1,1)),string(param(1,2)), filter_type);
                 writetable(t_tabs{idx},tab_path,"WriteMode","append");
@@ -271,8 +272,8 @@ classdef tune_parameters
         end
 
         function run(obj)
-            % obj=prepare_tabels(obj);
-            % process_images(obj);
+            obj=prepare_tabels(obj);
+            process_images(obj);
             process_results(obj);
             make_benchmark_heatmaps(obj);
         end

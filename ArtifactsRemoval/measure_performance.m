@@ -10,8 +10,8 @@
 
 % parameters
 filepath ="..\Datasets\TCGA.svs"; % path to the svg file
-output = "..\output\";            % path to the output for binary files
-blocksize =[2048 2048];           % size of the block (if the cutpoint of the image is [1 1] size of the block should be the multiple of 8)
+output = "..\output1\";            % path to the output for binary files
+blocksize =[512 512];             % size of the block (if the cutpoint of the image is [1 1] size of the block should be the multiple of 8)
 parallel = true;                  % use parallel pool 
 filt_size = 3;                    % size of the filter
 sigma = 1.1;                      % std of the gaussian filter
@@ -19,10 +19,13 @@ res_path = "result.svs";          % path for the results
 gpu=true;                         % use gpu or not 
 
 % parpool params
-numberOfWorkers = 3;
+numberOfWorkers = 6;
 pool = parpool(numberOfWorkers);
 
 % measure time
-tic
+% tic
 load_wsi_func(filepath, output, blocksize, parallel, filt_size, sigma, res_path, gpu); % handle to function
-toc
+% toc
+
+% profile on;
+% profile('-memory','on');

@@ -12,6 +12,7 @@ function mbim = load_wsi_func(filepath, output, blocksize, parallel, filt_size, 
 
 % load blocked image
 bim = blockedImage(filepath);
+num_layers = bim.NumLevels;
 
 
 % count tresholds for each color channel (otsu method)
@@ -36,6 +37,9 @@ original_desc = imfinfo(filepath);
 
 % save first layer ( use Tiff because of the high resolution )
 l1=gather(benh);
+
+psnr_val = psnr(l1,gather(bim,"Level",1));
+
 t = Tiff(res_path,"w8");
 tagstruct.Photometric = Tiff.Photometric.RGB;
 tagstruct.ImageLength = size(l1,1);
@@ -45,7 +49,7 @@ tagstruct.SamplesPerPixel = 3;
 tagstruct.Compression = Tiff.Compression.None;
 tagstruct.SampleFormat = Tiff.SampleFormat.UInt;
 tagstruct.BitsPerSample = 8;
-tagstruct.RowsPerStrip = 512;
+tagstruct.RowsPerStrip = 512; %% przepisać z obrazu
 tagstruct.ImageDescription = original_desc(1).ImageDescription;
 t.setTag(tagstruct);
 t.write(l1);
@@ -79,12 +83,6 @@ imwrite(l7,res_path,"tiff","WriteMode","append","Description",data.ImageDescript
 
 data.ImageDescription = original_desc(7).ImageDescription;
 imwrite(l5,res_path,"tiff","WriteMode","append","Description",data.ImageDescription);
-
-% create layers with lower resolution
-% mbim = makeMultiLevel2D(benh,"Scales",[1 0.25 0.125 0.06125]);
-% save image
-% wadapter = images.blocked.TIFF; 
-% write(mbim, res_path, "Adapter", wadapter);
 
 end
 
