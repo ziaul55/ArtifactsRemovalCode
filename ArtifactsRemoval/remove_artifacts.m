@@ -37,6 +37,8 @@ classdef remove_artifacts
                         im_res = run_method_2_median(obj);
                     elseif obj.FilterType == "wave"
                         im_res = run_method_2_wave(obj);
+                    elseif obj.FilterType == "guided"
+                        im_res = run_method_2_imguided(obj);
                     else
                         im_res = run_method_2(obj);
                     end
@@ -359,6 +361,54 @@ classdef remove_artifacts
                 % filter whole image layer
                 im_res(:,:,i) = wiener2(im(:,:,i) .* map_edges, ...
                     [filter_size filter_size]) ./ W;               
+            end
+        end
+
+        function im_res = run_method_2_imguided(obj)
+            im=im2double(obj.Image);
+            filter_size=obj.FilterSize;
+
+            % preallocate memory
+            [n, m, d] = size(im);
+            im_res=zeros(n, m, d, "double");
+            all_edges = zeros(n, m, d, 'double'); % now numbers not logical values
+            all_edges_bin=zeros(n,m,d,'logical'); % to detect ones in three channels
+            % detect all edges for each image layer
+            for i=1:d
+                % extract a layer
+                layer = im(:,:,i);
+                % count gradients
+                [gmag, ~] = imgradient(layer, 'central');
+                gmag_grayscale = mat2gray(gmag);
+                % detect edges
+                [T, ~]=graythresh(gmag_grayscale); % compute treshold value (Otsu algorithm)
+
+                gmag_grayscale_bin = gmag_grayscale;
+                gmag_grayscale_bin(gmag_grayscale_bin <= T) = 0; 
+                gmag_grayscale_bin(gmag_grayscale_bin > T) = 1;  
+                all_edges_bin(:,:,i)=gmag_grayscale_bin;
+
+                gmag_grayscale(gmag_grayscale <= T) = 0; % if pixel value is below treshold replace it with 0
+                gmag_grayscale(gmag_grayscale > T) = gmag_grayscale(gmag_grayscale > T) - T;  % (piksel-treshold)
+                all_edges(:,:,i) = gmag_grayscale ./(1-T); %(piksel - treshold)/(1-treshold) or 0/(1-treshold)=0    
+            end
+
+            % Prepare binary map of edges
+            im_edges_binary=logical(sum(all_edges_bin, 3) == 3);
+            im_edges_binary=additional_functions.delete_false_edges(im_edges_binary, n, m, obj.CutPoint);
+            im_edges_binary_open = imopen(im_edges_binary, strel('square', 2));
+        
+            for i=1:d
+                im_edges=all_edges(:,:,i).*im_edges_binary_open;
+                map_edges = imcomplement(im_edges);
+
+                % make a weight map
+                % W = imfilter(map_edges, filter_mask, 'symmetric', 'conv');
+                W = imguidedfilter(map_edges, "DegreeOfSmoothing", 0.004, "NeighborhoodSize",3);
+
+                % filter whole image layer
+                im_res(:,:,i) = imguidedfilter(im(:,:,i) .* map_edges, ...
+                    "DegreeOfSmoothing", 0.004, "NeighborhoodSize",3) ./ W;               
             end
         end
 
