@@ -1,5 +1,5 @@
 % Load WSI
-destination="org_2layers.svs";%"..\Datasets\TCGA.svs";
+destination="org_7layers.svs";%"..\Datasets\TCGA.svs";
 wadapter = images.blocked.TIFF();
 bim = blockedImage(destination,Adapter=wadapter); % is readonly
 info_org = imfinfo(destination);
@@ -56,10 +56,13 @@ end
 % remove artifacts (block processing)
 sigma = 1.7;
 size_filt = 5;
-layer1= apply(bim,...
+[layer1, psnr_val, ssim_val]= apply(bim,...
     @(bs)method2_WSI(bs.Data, params, sigma, size_filt, true),...
-    "BorderSize", [size_filt size_filt],"Level",1, "UseParallel",true,"OutputLocation","..\output2\","BlockSize",[1024 1024]);
+    "BorderSize", [size_filt size_filt],"Level",1, "UseParallel",true,"OutputLocation","..\output5\","BlockSize",[1024 1024]);
 
+layer1_org = gather(bim, "Level",1);
+
+ssim = gather(ssim_val);
 
 % Save image
 
