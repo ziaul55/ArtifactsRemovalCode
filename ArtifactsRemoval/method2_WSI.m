@@ -1,4 +1,4 @@
-function [im_res, psnr_val, ssim_val] = method2_WSI(im_org, params, sigma, size_filt, gpu)
+function [im_res, psnr_vals] = method2_WSI(im_org, params, sigma, size_filt, gpu)
 %METHOD2_WSI function to remove compression artifacts from a WSI image
 % im - image (or block) to process
 % params - vector of threshold values (for each color channel)
@@ -71,6 +71,7 @@ function [im_res, psnr_val, ssim_val] = method2_WSI(im_org, params, sigma, size_
             if gpu
                 im_res=gather(im_res);
             end
-            [psnr_val,ssim_val] = quality_metrics.count_metrics(im_org, im_res);
+
+            psnr_vals=calculate_partial_MSE(im_org, im_res);
            
         end

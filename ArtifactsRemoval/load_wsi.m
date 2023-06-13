@@ -56,13 +56,15 @@ end
 % remove artifacts (block processing)
 sigma = 1.7;
 size_filt = 5;
-[layer1, psnr_val, ssim_val]= apply(bim,...
+[layer1, psnr_vals]= apply(bim,...
     @(bs)method2_WSI(bs.Data, params, sigma, size_filt, true),...
-    "BorderSize", [size_filt size_filt],"Level",1, "UseParallel",true,"OutputLocation","..\output5\","BlockSize",[1024 1024]);
+    "BorderSize", [size_filt size_filt],"Level",1, "UseParallel",true,"OutputLocation","..\output12\","BlockSize",[1024 1024]);
 
 layer1_org = gather(bim, "Level",1);
 
-ssim = gather(ssim_val);
+mse = sum(gather(psnr_vals));
+mse = mse/(size(layer1_org,1)*size(layer1_org,2));
+psnr_score = 10*log10((255*255)/mse);
 
 % Save image
 
