@@ -56,17 +56,11 @@ end
 % remove artifacts (block processing)
 sigma = 1.7;
 size_filt = 5;
-[layer1, psnr_vals]= apply(bim,...
+layer1= apply(bim,...
     @(bs)method2_WSI(bs.Data, params, sigma, size_filt, true),...
-    "BorderSize", [size_filt size_filt],"Level",1, "UseParallel",true,"OutputLocation","..\output12\","BlockSize",[1024 1024]);
+    "BorderSize", [size_filt size_filt],"Level",1, "UseParallel",true,"OutputLocation","..\COMPRESSION_ADOBE_DEFLATE\","BlockSize",[1024 1024]);
 
-layer1_org = gather(bim, "Level",1);
 
-mse = sum(gather(psnr_vals));
-mse = mse/(size(layer1_org,1)*size(layer1_org,2));
-psnr_score = 10*log10((255*255)/mse);
-
-% Save image
 
 % calculate scales for next layers
 scales = zeros(num_layers_process-1, 1, "double");
@@ -76,9 +70,12 @@ for i=2:num_layers_process
 end
 
 % due to the large size use TiffLib instead of imwrite
-%% compression, ssim, psnr, filtracja 
-img_name = "2layers.svs";
+
+
+img_name = "COMPRESSION_ADOBE_DEFLATE.svs";
 current_layer=gather(layer1);
+
+
 for i=1:num_layers_process
 
     if i>1
@@ -101,7 +98,7 @@ for i=1:num_layers_process
     tags.RowsPerStrip = info.RowsPerStrip;
     tags.TileWidth = info.TileWidth;
     tags.TileLength = info.TileLength;
-    tags.Compression = Tiff.Compression.PackBits;
+    tags.Compression = Tiff.Compression.COMPRESSION_ADOBE_DEFLATE;
     tags.ImageDescription = info.ImageDescription;
     tags.PlanarConfiguration = Tiff.PlanarConfiguration.Chunky;
     tags.Software = 'MATLAB';
@@ -128,6 +125,5 @@ end
 
 
 
-%%
-img=imread('7layers.svs','Index',2,'PixelRegion', {[1,16000],[1,16000]});
-imshow(img);
+img_packbits=imread(img_name,'Index',1,'PixelRegion', {[1,16000],[1,16000]});
+imshow(img_packbits);
