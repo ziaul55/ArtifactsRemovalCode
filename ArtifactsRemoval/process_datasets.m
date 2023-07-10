@@ -1,0 +1,16 @@
+dataset.filepath = "C:\Users\Julia\Documents\GitHub\ArtifactsRemovalCode\Datasets\BreCaHAD\";
+dataset.result = "C:\Users\Julia\Documents\GitHub\ArtifactsRemovalCode\Datasets\test\";
+dataset.filetype = "tif";
+dataset.save = true;
+dataset.Q = [10,20,30];
+
+opts.Sigma = [1.4, 1.2, 1.3];
+opts.Size = [3, 5, 7];
+opts.CutPoint = {[1 1]};
+methods(1).name = "EPA_ID_gauss";
+methods(1).opts = opts;
+
+tab = process_dataset(dataset(1), methods(1).name, methods(1).opts);
+
+writetable(tab, "file.csv");
+res = calculate_stats(tab);

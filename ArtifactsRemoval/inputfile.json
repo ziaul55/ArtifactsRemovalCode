@@ -1,9 +1,0 @@
-{"datasets":[
-    { "filepath":"../Datasets/BreCaHAD/", "filetype":"tif", "results_filepath":"../Results/wienergaussian", "cutpoint":[1,1] , "save": true}
-],
- "q":[10,20,30, 40],
- "filters":[
-     {"type":"guided", "sizes":[3], "sigmas":[1.4]}],
- "methods":["blur"]
-}
-
