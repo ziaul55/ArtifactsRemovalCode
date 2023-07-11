@@ -8,7 +8,7 @@ function im_res = EPA_ID_wave(im, opts)
 % alpha - penalization parameter
 % level - decomposition level
 % keepapp - Threshold approximation setting, If keepapp = 1, the approximation coefficients are not thresholded.
-% CutPoint - image cut point
+% CutPoint - image cut point opts.CutPoint == {[1 1]}
 % returns - im_res - filtred image (uint8)
 
 im=im2double(im);
@@ -40,7 +40,7 @@ end
 
 % Prepare the binary map of edges
 im_edges_binary=logical(sum(all_edges_bin, 3) == 3);
-im_edges_binary=delete_false_edges(im_edges_binary, n, m, opts.CutPoint);
+im_edges_binary=delete_false_edges(im_edges_binary, n, m, opts.CutPoint{1});
 im_edges_binary_open = imopen(im_edges_binary, strel('square', 2));
 
 for i=1:d

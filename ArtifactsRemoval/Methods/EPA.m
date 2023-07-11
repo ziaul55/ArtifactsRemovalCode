@@ -8,7 +8,7 @@ function im_res = EPA(im, opts)
 % @input opts - struct with following parameters:
 % - Sigma - sigma parameter for Gaussian filter
 % - Size - kernel size
-% - CutPoint
+% - CutPoint - image cut point opts.CutPoint == {[1 1]}
 % @output im_res - the image without artifacts
 
 im = im2double(im);
@@ -38,7 +38,7 @@ end
 
 % make a map of the edges
 im_edges = logical(sum(all_edges, 3) == 3); % sum ones
-im_edges = delete_false_edges(im_edges, n, m, opts.CutPoint);
+im_edges = delete_false_edges(im_edges, n, m, opts.CutPoint{1});
 im_edges = imopen(im_edges, strel('square',2));
 map_edges = im2double(~im_edges);
 

@@ -34,7 +34,7 @@ end
 
 % Prepare binary map of edges
 im_edges_binary=logical(sum(all_edges_bin, 3) == 3);
-im_edges_binary=delete_false_edges(im_edges_binary, n, m, opts.CutPoint);
+im_edges_binary=delete_false_edges(im_edges_binary, n, m, opts.CutPoint{1});
 im_edges_binary_open = imopen(im_edges_binary, strel('square', 2));
 
 for i=1:d

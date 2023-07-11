@@ -4,7 +4,7 @@ function im_res = EPA_ID_W(im, opts)
 % opts - structure with following parameters:
 % - Size - size of the gaussian filter
 % - Sigma - stdev of the gaussian filter
-% - CutPoint - the cut point for the image (8x8 grid position)
+% - CutPoint - the cut point for the image (8x8 grid position) opts.CutPoint == {[1 1]}
 % returns im_res filtred image
 
 im=im2double(im);
@@ -37,7 +37,7 @@ end
 
 % Prepare binary map of edges
 im_edges_binary=logical(sum(all_edges_bin, 3) == 3);
-im_edges_binary=delete_false_edges(im_edges_binary, n, m, opts.CutPoint);
+im_edges_binary=delete_false_edges(im_edges_binary, n, m, opts.CutPoint{1});
 im_edges_binary_open = imopen(im_edges_binary, strel('square', 2));
 map_edges_binary=double(~im_edges_binary_open);
 

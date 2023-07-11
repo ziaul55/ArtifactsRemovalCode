@@ -4,7 +4,7 @@ function im_res = EPA_ID_gauss(im, opts)
 % opts - structure with following parameters
 % - Size - size of the filter
 % - Sigma - std of the gaussian filter
-% - CutPoint - image cut point
+% - CutPoint - image cut point cell opts.CutPoint == {[1 1]}
 % returns im_res - filtred image
 
 im=im2double(im);
