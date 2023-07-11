@@ -9,7 +9,13 @@ function results_table = process_dataset(dataset, method, opts)
 % opts - structure with parameters for the method
 % method - the name of the method
 % returns result_table - table with results
-% INFO: file will be saved as method_raw.csv
+% INFO: file will be saved as method_raw.csv, method_stats_psnr.csv,
+% method_stats_ssim.csv
+% INFO: if result folder does not exist it will be created
+
+if ~exist(dataset.result, 'dir')
+    mkdir(dataset.result)
+end
 
 results_table = table();
 % read dataset
@@ -57,7 +63,7 @@ csv_path = sprintf("%s/%s_raw.csv",dataset.result, method);
 writetable(results_table, csv_path );
 
 % save stats
-[res_ssim, res_psnr] = calculate_stats(result_table);
+[res_ssim, res_psnr] = calculate_stats(results_table);
 writetable(res_psnr, "%s/%s_stats_psnr.csv",dataset.result, method);
 writetable(res_ssim, "%s/%s_stats_ssim.csv",dataset.result, method);
 
